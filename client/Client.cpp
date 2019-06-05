@@ -21,6 +21,12 @@ Client::Client(QObject *parent)
     connect(sock, &QTcpSocket::disconnected, this, [=]() {
         emit this->disconnected();
     });
+    connect(sock, static_cast<void(QTcpSocket::*)(QTcpSocket::SocketError)>(&QTcpSocket::error),
+            this, [this](QAbstractSocket::SocketError) {
+        if (this->sock) {
+            qDebug() << this->sock->errorString();
+        }
+    });
 }
 
 void Client::connectToHost(const QString &host, uint16_t port)
