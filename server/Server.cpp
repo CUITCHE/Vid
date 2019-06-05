@@ -218,7 +218,10 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
         }
         qDebug() << fdiff.relative_path().c_str() << "\t" << fdiff.status();
         auto path = watchPath;
-        path.append("/").append(fdiff.relative_path().c_str());
+        if (!path.endsWith("/")) {
+            path.append("/");
+        }
+        path.append(fdiff.relative_path().c_str());
         qDebug() << path;
         QFile file(path);
         if (fdiff.status() == FileMonitor::removed) {
@@ -240,7 +243,7 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
                 break;
             }
         } else if (fdiff.status() == FileMonitor::modified) {
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text) == false) {
+            if (file.open(QIODevice::WriteOnly | QIODevice::Text) == false) {
                 res.set_code(403);
                 QString msg = path;
                 msg.append(": 无法读取文件");

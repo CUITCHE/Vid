@@ -22,16 +22,21 @@ Client::Client(QObject *parent)
         emit this->disconnected();
     });
     connect(sock, static_cast<void(QTcpSocket::*)(QTcpSocket::SocketError)>(&QTcpSocket::error),
-            this, [this](QAbstractSocket::SocketError) {
+            this, [this](QAbstractSocket::SocketError e) {
         if (this->sock) {
-            qDebug() << this->sock->errorString();
+            qDebug() << this->sock->errorString() << "\t" << e;
         }
     });
 }
 
 void Client::connectToHost(const QString &host, uint16_t port)
 {
-    sock->connectToHost(host, port);
+    qDebug() << "host: " << host;
+    if (host.count(".") == 3) {
+        sock->connectToHost(QHostAddress(host), port);
+    } else {
+        sock->connectToHost(host, port);
+    }
 }
 
 void Client::sendData(const QByteArray &data)

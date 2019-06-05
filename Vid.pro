@@ -7,6 +7,7 @@ TARGET = Vid
 INCLUDEPATH += .
 CONFIG += qt
 QT += core network
+QT -= gui
 
 # The following define makes your compiler warn you if you use any
 # feature of Qt which has been marked as deprecated (the exact warnings
@@ -46,11 +47,7 @@ SOURCES += \
     model/responses.pb.cc \
     model/SerializedTool.cpp \
 
-macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf
+macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf.18
 
 INCLUDEPATH += /usr/local/Cellar/protobuf/3.7.1/include
 DEPENDPATH += /usr/local/Cellar/protobuf/3.7.1/include
-
-unix: LIBS += -L/usr/local//protobuf/lib/ -lprotobuf
-
-unix: PRE_TARGETDEPS += /usr/local/protobuf/lib/libprotobuf.a

@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
     parser.addOption(address);
     parser.addHelpOption();
     parser.addVersionOption();
+    parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
     parser.process(a);
     auto args = parser.positionalArguments();
@@ -50,10 +51,11 @@ int main(int argc, char *argv[])
     auto module = args[0];
     auto path  = args[1];
     auto port = static_cast<uint16_t>(args[2].toUInt());
+    qDebug() << args;
     if (module == "client") {
         QString host = "localhost";
         if (parser.isSet(address)) {
-            host = parser.value(address);
+            host = args[3];
         }
         start_client(host, path, port);
     } else if (module == "server") {
