@@ -46,7 +46,11 @@ SOURCES += \
     model/responses.pb.cc \
     model/SerializedTool.cpp \
 
-macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf.18
+macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf
 
 INCLUDEPATH += /usr/local/Cellar/protobuf/3.7.1/include
 DEPENDPATH += /usr/local/Cellar/protobuf/3.7.1/include
+
+unix: LIBS += -L/usr/local//protobuf/lib/ -lprotobuf
+
+unix: PRE_TARGETDEPS += /usr/local/protobuf/lib/libprotobuf.a
