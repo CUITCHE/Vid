@@ -13,7 +13,7 @@
 
 static QString random_string_8() {
     std::string tmp("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    qsrand((uint)QTime(0, 0, 0).secsTo(QTime::currentTime()));
+    qsrand(static_cast<uint>(QTime(0, 0, 0).secsTo(QTime::currentTime())));
     std::sort(tmp.begin(), tmp.end(),  [](const char, const char) {
         return qrand() % 47 > 23;
     });
@@ -38,7 +38,7 @@ void Server::startListen(quint16 port, const QString &watchPath)
         qWarning() << server->errorString();
     }
     qDebug() << "listen on " << port;
-    passwd = "2X5T0YVW"; //random_string_8();
+    passwd = random_string_8();
     qDebug() << "Token: " << passwd;
 }
 
