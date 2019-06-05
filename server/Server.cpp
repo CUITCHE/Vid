@@ -17,6 +17,7 @@ static QString random_string_8() {
     std::sort(tmp.begin(), tmp.end(),  [](const char, const char) {
         return qrand() % 47 > 23;
     });
+    return "";
     return QString::fromStdString(tmp).left(8);
 }
 
@@ -235,6 +236,11 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
             res.set_msg(b ? "success": "remove failed");
             break;
         } else if (fdiff.status() == FileMonitor::add) {
+            auto parentDirPath = QDir(path.section("/", 0, -2));
+            if (parentDirPath.exists() == false) { // 有可能出现上级目录不存在的情况
+                auto b = parentDirPath.mkpath(parentDirPath.path());
+                b ? qDebug() << "新建目录：" << parentDirPath.path() : qDebug() << "新建目录error：" << parentDirPath.path();
+            }
             if (file.open(QIODevice::WriteOnly | QIODevice::Text) == false) {
                 res.set_code(403);
                 auto msg = path;

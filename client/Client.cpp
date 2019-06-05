@@ -145,12 +145,11 @@ void Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
             return;
         }
         QByteArray content = file->readAll();
-        file->close();
         body.set_content(content.toStdString());
     }
 
     int queryId = _get_query_id();
-    requestReact.insert(queryId, [=](const void *ptr) {
+    requestReact.insert(queryId, [queryId](const void *ptr) {
         auto &res = *static_cast<const communication::Responese *>(ptr);
         if (res.id() != queryId) {
             qWarning() << "请求id不匹配";

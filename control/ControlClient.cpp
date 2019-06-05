@@ -68,7 +68,6 @@ void ControlClient::setLoginInfo(const QString &name, const QString &token)
 
 void ControlClient::onFileChanged(const QString &path, FileMonitor::FileChangeType type)
 {
-    qDebug() << __func__;
     QFile *file = nullptr;
     QString relativePath = path.mid(watchPath.length() + 1);
     if (type != FileMonitor::removed) {

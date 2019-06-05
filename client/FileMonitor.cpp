@@ -75,8 +75,13 @@ void FileMonitor::start(const QString &path) {
 
 
 void FileMonitor::stop() {
-    watcher->removePaths(watcher->files());
-    watcher->removePaths(watcher->directories());
+    if (watcher->files().isEmpty() == false) {
+        watcher->removePaths(watcher->files());
+    }
+    if (watcher->directories().isEmpty() == false) {
+        watcher->removePaths(watcher->directories());
+    }
+
     existsFilePath.clear();
 }
 
