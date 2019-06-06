@@ -1,7 +1,6 @@
 #include "Client.h"
 #include <QTcpSocket>
 #include <QHostAddress>
-#include <QDebug>
 #include "model/requests.pb.h"
 #include "model/base.pb.h"
 #include "model/SerializedTool.h"
@@ -11,8 +10,9 @@
 
 
 Client::Client(QObject *parent)
-: QObject(parent)
-, sock(new QTcpSocket(this))
+    : QObject(parent)
+    , LoggerI(parent)
+    , sock(new QTcpSocket(this))
 {
     connect(sock, &QTcpSocket::readyRead, this, &Client::onReadyRead);
     connect(sock, &QTcpSocket::connected, this, [=]() {
@@ -31,7 +31,6 @@ Client::Client(QObject *parent)
 
 void Client::connectToHost(const QString &host, uint16_t port)
 {
-    qDebug() << "host: " << host;
     if (host.count(".") == 3) {
         sock->connectToHost(QHostAddress(host), port);
     } else {
@@ -65,10 +64,11 @@ void Client::tokenLogin(const QString &token, const QString &name)
     requestReact.insert(queryId, [=](const void *ptr) {
         auto &res = *static_cast<const communication::Responese *>(ptr);
         if (res.id() != queryId) {
-            qWarning() << "请求id不匹配";
+            logger->warning("请求id不匹配");
             return ;
         }
         qDebug("登录：code: %d, msg: %s。开始验证目录", res.code(), res.msg().c_str());
+        logger->i("登录：code: {}, msg: {}。开始验证目录", res.code(), res.msg());
         emit this->loginSuccess();
     });
     communication::request::TokenLogin body;

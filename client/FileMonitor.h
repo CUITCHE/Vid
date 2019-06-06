@@ -2,13 +2,14 @@
 #define FILEMONITOR_H
 
 #include <QObject>
+#include "model/LoggerI.h"
 
 class FileMonitorPrivate;
 class QFileSystemWatcher;
 class QDir;
 
 
-class FileMonitor : public QObject
+class FileMonitor : public QObject, public LoggerI
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(FileMonitor)

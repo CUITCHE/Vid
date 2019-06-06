@@ -23,6 +23,7 @@ static QString random_string_8() {
 
 Server::Server(QObject *parent)
     : QObject(parent)
+    , LoggerI(parent)
     , server(new QTcpServer(this))
 {
     connect(server, &QTcpServer::newConnection, this, &Server::onNewConnection);
@@ -38,20 +39,20 @@ void Server::startListen(quint16 port, const QString &watchPath)
     if (!b) {
         qWarning() << server->errorString();
     }
-    qDebug() << "listen on " << port;
     passwd = random_string_8();
-    qDebug() << "Token: " << passwd;
+    logger->i("listen on {}. Token: {}.", port, passwd);
+
 }
 
 void Server::onNewConnection()
 {
     if (client) {
-        qDebug() << "已存在连接";
+        logger->w("已接入一个客户端: {} {}。本服务同时只接受一个连接!", client->peerAddress(), client->peerName());
         return;
     }
     isLogin = false;
     client = server->nextPendingConnection();
-    qDebug() << "新socket接入：" << client->peerAddress();
+    logger->i("新连接接入: {} {}.", client->peerAddress(), client->peerName());
     connect(client, &QTcpSocket::readyRead, this, &Server::onClientReadyRead);
     connect(client, &QTcpSocket::disconnected, this, &Server::onClientDisconnected);
     QTimer::singleShot(1000, this, [this]() {
@@ -75,7 +76,7 @@ void Server::onClientReadyRead()
 
     communication::Request req;
     if (req.ParseFromArray(buffer.data(), buffer.length()) == false) {
-        qDebug() << "请求数据格式错误";
+        logger->e("{}: 请求数据格式错误", client->peerAddress());
         client->abort();
         client = nullptr;
     }
@@ -87,7 +88,7 @@ void Server::onClientReadyRead()
 
 void Server::onClientDisconnected()
 {
-    qDebug() << client->peerAddress() << ": 连接断开";
+    logger->i("{}: 连接断开", client->peerAddress());
     client = nullptr;
 }
 
@@ -109,7 +110,7 @@ void Server::onTokenLogin(const communication::Request &req, QTcpSocket *sock)
             if (tokenLogin.token() == passwd.toStdString()) {
                 res.set_code(0);
                 res.set_msg("success");
-                qDebug() << "Welcome：" << tokenLogin.name().c_str();
+                logger->i("Welcome: {}", tokenLogin.name());
                 isLogin = true;
                 break;
             }
@@ -126,7 +127,6 @@ extern QMap<QString, QString> files_hahs(QStringList paths);
 
 void Server::onDirectoryVerification(const communication::Request &req, QTcpSocket *sock)
 {
-    qDebug() << "收到目录验证请求";
     communication::Responese res;
     res.set_id(req.id());
 
@@ -207,7 +207,6 @@ void Server::onDirectoryVerification(const communication::Request &req, QTcpSock
 
 void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
 {
-    qDebug() << "收到diff请求";
     communication::Responese res;
     res.set_id(req.id());
     do {
@@ -217,13 +216,11 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
             res.set_msg("数据包格式不对");
             break;
         }
-        qDebug() << fdiff.relative_path().c_str() << "\t" << fdiff.status();
         auto path = watchPath;
         if (!path.endsWith("/")) {
             path.append("/");
         }
         path.append(fdiff.relative_path().c_str());
-        qDebug() << path;
         QFile file(path);
         if (fdiff.status() == FileMonitor::removed) {
             if (file.exists() == false) {
@@ -234,18 +231,20 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
             auto b = file.remove();
             res.set_code(b ? 0 : 5);
             res.set_msg(b ? "success": "remove failed");
+            logger->i("{}: remove {}.", path, b ? "success" : "failed");
             break;
         } else if (fdiff.status() == FileMonitor::add) {
             auto parentDirPath = QDir(path.section("/", 0, -2));
             if (parentDirPath.exists() == false) { // 有可能出现上级目录不存在的情况
                 auto b = parentDirPath.mkpath(parentDirPath.path());
-                b ? qDebug() << "新建目录：" << parentDirPath.path() : qDebug() << "新建目录error：" << parentDirPath.path();
+                logger->i("{}: create directory {}.", parentDirPath.path(), b ? "success" : "failed");
             }
             if (file.open(QIODevice::WriteOnly | QIODevice::Text) == false) {
                 res.set_code(403);
                 auto msg = path;
                 msg.append(": 无法在此处新建文件");
                 res.set_msg(msg.toStdString());
+                logger->info(msg);
                 break;
             }
         } else if (fdiff.status() == FileMonitor::modified) {
@@ -254,6 +253,7 @@ void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
                 QString msg = path;
                 msg.append(": 无法读取文件");
                 res.set_msg(msg.toStdString());
+                logger->info(msg);
                 break;
             }
         }

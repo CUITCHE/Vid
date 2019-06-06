@@ -5,6 +5,7 @@
 #include <QMap>
 #include <functional>
 #include <atomic>
+#include "model/LoggerI.h"
 
 namespace communication {
     class Request;
@@ -14,7 +15,7 @@ class QTcpSocket;
 class QFile;
 
 
-class Client : public QObject
+class Client : public QObject, public LoggerI
 {
     Q_OBJECT
 public:

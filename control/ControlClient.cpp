@@ -1,6 +1,5 @@
 #include "ControlClient.h"
 #include "client/Client.h"
-#include <QDebug>
 #include <QFile>
 #include <QDir>
 #include <QMap>
@@ -34,7 +33,6 @@ ControlClient::ControlClient(QObject *parent)
         this->client = nullptr;
     });
     connect(client, &Client::connected, this, [this]() {
-        qDebug() << "连接成功！开始登入";
         this->client->tokenLogin(this->token, this->name);
     });
 
@@ -46,7 +44,6 @@ ControlClient::ControlClient(QObject *parent)
         FileMonitor::obtainAllFile(dir, existsFilePath, nameFilters);
         auto contents = files_hahs(existsFilePath);
         this->client->directoryVerification(this->watchPath, dir.dirName(), contents);
-        qDebug() << "发送目录验证请求";
     });
     connect(client, &Client::shouldBegin, this, [this]() {
         this->fm->start(this->watchPath);

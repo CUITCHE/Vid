@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include "model/LoggerI.h"
 
 class QTcpServer;
 class QTcpSocket;
@@ -12,7 +13,7 @@ namespace communication {
     class Request;
 }
 
-class Server : public QObject
+class Server : public QObject, public LoggerI
 {
     Q_OBJECT
 public:

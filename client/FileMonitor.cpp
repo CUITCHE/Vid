@@ -2,7 +2,6 @@
 
 #include "FileMonitor.h"
 #include <QFileSystemWatcher>
-#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
@@ -17,8 +16,9 @@ using FileInfoType = QMap<QString, FileInfo>;
 
 
 FileMonitor::FileMonitor(QObject *parent)
-: QObject(parent)
-, watcher(new QFileSystemWatcher)
+    : QObject(parent)
+    , LoggerI(parent)
+    , watcher(new QFileSystemWatcher)
 {
     connect(watcher, &QFileSystemWatcher::fileChanged, this, &FileMonitor::onFileChanged);
     connect(watcher, &QFileSystemWatcher::directoryChanged, this, &FileMonitor::onDirectoryChanged);
@@ -53,15 +53,15 @@ static void obtainNewFiles(const QDir &dir,
 void FileMonitor::start(const QString &path) {
     QFileInfo file(path);
     if (file.isDir() == false) {
-        qCritical() << file.absolutePath() << ": is not a directory.";
+        logger->f("'{}' is not a directory.", file.absolutePath());
         exit(-1);
     }
     if (file.exists() == false) {
-        qCritical() << path << ": is not exists.";
+        logger->f("'{}' is not exists.", path);
         exit(-1);
     }
     if (file.isReadable() == false) {
-        qCritical() << path << ": no permission to read.";
+        logger->f("{} no permission to read.", path);
         exit(-1);
     }
     watcher->addPath(path);
@@ -69,8 +69,7 @@ void FileMonitor::start(const QString &path) {
     QStringList nameFilters;
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
     obtainAllFile(dir, existsFilePath, nameFilters);
-    qDebug() << "已存在文件数量：" << existsFilePath.count();
-    qDebug() << existsFilePath;
+    logger->i("已存在文件数量：{}. => {}", existsFilePath.count());
 }
 
 
@@ -99,11 +98,9 @@ void FileMonitor::obtainAllFile(const QDir &dir, QStringList &all, const QString
 }
 
 void FileMonitor::onFileChanged(const QString &path) {
-    qDebug() << "文件改变";
     QFile f(path);
     if (f.exists()) {
         emit fileChanged(path, f.exists() ? modified : removed);
-        qDebug() << __func__ << path << ": modified";
     } else {
         existsFilePath.removeAll(path);
     }
@@ -114,7 +111,6 @@ static void _remove_not_exists_file(QStringList &existsFilePath, FileMonitor *fm
     while (begin != existsFilePath.end()) {
         QFile f(*begin);
         if (!f.exists()) {
-            qDebug() << __func__ << *begin << ": removed";
             emit fm->fileChanged(*begin, FileMonitor::removed);
             begin = existsFilePath.erase(begin);
         } else {
@@ -124,14 +120,12 @@ static void _remove_not_exists_file(QStringList &existsFilePath, FileMonitor *fm
 }
 
 void FileMonitor::onDirectoryChanged(const QString &path) {
-    qDebug() << "目录改变: " << path;
     QDir dir(path);
     dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
     QStringList nameFilters;
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
     QFileInfoList changedFiles;
     obtainNewFiles(dir, changedFiles, nameFilters, QDateTime::currentDateTime(), existsFilePath);
-    qDebug() << "changed files: " << changedFiles;
     if (changedFiles.isEmpty()) {
         _remove_not_exists_file(existsFilePath, this);
     } else {
@@ -142,7 +136,6 @@ void FileMonitor::onDirectoryChanged(const QString &path) {
                 watcher->addPath(path);
                 existsFilePath.append(path);
                 emit fileChanged(path, FileChangeType::add);
-                qDebug() << path << "新增";
             }
         }
     }

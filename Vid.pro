@@ -6,6 +6,7 @@ TEMPLATE = app
 TARGET = Vid
 INCLUDEPATH += .
 CONFIG += qt
+CONFIG -= app_bundle
 QT += core network
 QT -= gui
 
@@ -26,6 +27,8 @@ HEADERS += \
     client/Client.h \
     client/FileMonitor.h \
     control/ControlClient.h \
+    model/Logger.h \
+    model/LoggerI.h \
     server/Server.h \
     server/RequestWrapper.h \
     server/ResponseWrapper.h \
@@ -39,6 +42,8 @@ SOURCES += \
     client/FileMonitor.cpp \
     control/ControlClient.cpp \
     main.cpp \
+    model/Logger.cpp \
+    model/LoggerI.cpp \
     server/RequestWrapper.cpp \
     server/ResponseWrapper.cpp \
     server/Server.cpp \
