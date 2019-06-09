@@ -52,6 +52,10 @@ static void obtainNewFiles(const QDir &dir,
 
 void FileMonitor::start(const QString &path) {
     QFileInfo file(path);
+    if (file.isAbsolute() == false) {
+        logger->f("{} is not a absolute path.", path);
+        exit(-1);
+    }
     if (file.isDir() == false) {
         logger->f("'{}' is not a directory.", file.absolutePath());
         exit(-1);

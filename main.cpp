@@ -15,25 +15,22 @@
 void start_client(const QString &host, const QString &path, uint16_t port);
 
 #include <QDir>
-#include "model/Logger.h"
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("Vid");
     QCoreApplication::setApplicationVersion("1.0.0");
 
-    auto logger = Logger::logger("Client", &a);
-    logger->e("{} {}", "Hello World");
-//    auto args = a.arguments();
-//    if (args.count() > 1 && args[1] == "client") {
-//        qDebug() << "client start";
-//        ControlClient *control = new ControlClient();
-//        control->setLoginInfo("hejunqiu", "");
-//        control->start("/Users/hejunqiu/Documents/QtProjects/work1/tmp", "localhost", 10999);
-//    } else {
-//        Server *server = new Server;
-//        server->startListen(10999, "/Users/hejunqiu/Documents/QtProjects/work2/tmp");
-//    }
+    auto args = a.arguments();
+    if (args.count() > 1 && args[1] == "client") {
+        qDebug() << "client start";
+        ControlClient *control = new ControlClient();
+        control->setLoginInfo("hejunqiu", "");
+        control->start("/tmp/test1/work", "localhost", 10999);
+    } else {
+        Server *server = new Server;
+        server->startListen(10999, "/tmp/test2/work");
+    }
 
 //    QCommandLineParser parser;
 //    parser.setApplicationDescription("A tool which Monitors file from client to server.");

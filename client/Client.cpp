@@ -24,7 +24,7 @@ Client::Client(QObject *parent)
     connect(sock, static_cast<void(QTcpSocket::*)(QTcpSocket::SocketError)>(&QTcpSocket::error),
             this, [this](QAbstractSocket::SocketError e) {
         if (this->sock) {
-            qDebug() << this->sock->errorString() << "\t" << e;
+            logger->i("{}\t{}.", this->sock->errorString(), e);
         }
     });
 }
@@ -67,7 +67,6 @@ void Client::tokenLogin(const QString &token, const QString &name)
             logger->warning("请求id不匹配");
             return ;
         }
-        qDebug("登录：code: %d, msg: %s。开始验证目录", res.code(), res.msg().c_str());
         logger->i("登录：code: {}, msg: {}。开始验证目录", res.code(), res.msg());
         emit this->loginSuccess();
     });
@@ -89,27 +88,27 @@ void Client::directoryVerification(const QString &rootPath, const QString &rootN
     requestReact.insert(queryId, [=](const void *ptr) {
         auto &res = *static_cast<const communication::Responese *>(ptr);
         if (res.id() != queryId) {
-            qWarning() << "请求id不匹配";
+            logger->warning("请求id不匹配");
             return;
         }
         if (res.code() != 0) {
-            qWarning() << "文件校验失败：" << res.msg().c_str();
+            logger->w("文件校验失败：{}.", res.msg());
             return ;
         }
         communication::responses::DirectoryVerification dv;
         if (dv.ParseFromString(res.body()) == false) {
-            qWarning() << "数据格式错误";
+            logger->warning("数据格式错误");
             return;
         }
         if (dv.root_name() != rootName.toStdString()) {
-            qWarning() << "双方根路径不匹配";
+            logger->warning("双方根路径不匹配");
             return ;
         }
         if (dv.differents().empty() == false) {
-            qWarning() << "目录：" << rootPath << " 存在差异文件，请先保证目录文件一致: ";
+            logger->w("目录：{}, 存在差异文件，请先保证目录文件一致", rootPath);
             return ;
         }
-        qDebug() << "diff功能已就绪，现在开始愉快的写代码吧！";
+        logger->info("diff功能已就绪，现在开始愉快的写代码吧！");
         emit this->shouldBegin();
     });
     communication::request::DirectoryVerification body;
@@ -141,7 +140,7 @@ void Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
         }
 
         if (file->size() > 10 * 1024 * 1024) {
-            qDebug() << "该文件大于10M，请手动传输" << file;
+            logger->i("{}：文件大于10M，请手动传输", file->fileName());
             return;
         }
         QByteArray content = file->readAll();
@@ -149,10 +148,10 @@ void Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
     }
 
     int queryId = _get_query_id();
-    requestReact.insert(queryId, [queryId](const void *ptr) {
+    requestReact.insert(queryId, [queryId, this](const void *ptr) {
         auto &res = *static_cast<const communication::Responese *>(ptr);
         if (res.id() != queryId) {
-            qWarning() << "请求id不匹配";
+            this->logger->warning("请求id不匹配");
             return;
         }
         qWarning() << "file diff：" << res.msg().c_str();
@@ -162,7 +161,6 @@ void Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
     req.set_id(queryId);
     req.set_proto(communication::Protocol::file_diff);
     req.set_body(body.SerializeAsString());
-    qDebug() << "发送diff请求";
     sendRequest(req);
 }
 
@@ -179,14 +177,15 @@ void Client::onReadyRead()
 
     communication::Responese res;
     if (res.ParseFromString(buffer.toStdString()) == false) {
-        qDebug() << "数据格式错误";
+        logger->fatal("数据格式错误");
         exit(-1);
     }
     auto iter = requestReact.find(res.id());
     if (iter != requestReact.end()) {
         (*iter)(&res);
     } else {
-        qDebug() << "错误的响应id: " << res.id();
+        logger->f("错误的响应id：{}", res.id());
+        exit(31);
     }
 }
 
