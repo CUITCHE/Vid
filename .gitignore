@@ -44,3 +44,4 @@ CMakeLists.txt.user*
 
 # idea
 .idea
+__pycache__

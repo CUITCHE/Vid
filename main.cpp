@@ -12,9 +12,6 @@
 #include <unistd.h>
 
 
-#define PRODUCT
-
-
 void start_client(const QString &host, const QString &path, uint16_t port);
 void testLogin();
 void _main();

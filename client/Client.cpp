@@ -95,19 +95,6 @@ void Client::directoryVerification(const QString &rootPath, const QString &rootN
             logger->w("文件校验失败：{}.", res.msg());
             return ;
         }
-        communication::responses::DirectoryVerification dv;
-        if (dv.ParseFromString(res.body()) == false) {
-            logger->warning("数据格式错误");
-            return;
-        }
-        if (dv.root_name() != rootName.toStdString()) {
-            logger->warning("双方根路径不匹配");
-            return ;
-        }
-        if (dv.differents().empty() == false) {
-            logger->w("目录：{}, 存在差异文件，请先保证目录文件一致", rootPath);
-            return ;
-        }
         logger->info("diff功能已就绪，现在开始愉快的写代码吧！");
         emit this->shouldBegin();
     });

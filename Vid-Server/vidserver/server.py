@@ -22,22 +22,39 @@ def random_token(length):
     return ''.join([random.choice(pool) for _ in range(length)])
 
 
-password = random_token(8)
+password = ''  # random_token(8)
 watchPath = ''
 fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue)$')
 
 
+class UnknownChangedFileTypeError(Exception):
+    pass
+
+
 class TCPHandler(socketserver.BaseRequestHandler):
     def __init__(self, request, client_address, server):
-        super().__init__(request, client_address, server)
         self.is_login = True
+        self.methods = {communication.Protocol.token_login: 'token_login',
+                        communication.Protocol.directory_verification: 'directory_verification',
+                        communication.Protocol.file_diff: 'file_diff'}
+        super().__init__(request, client_address, server)
 
     def handle(self):
+
         try:
             while True:
                 req = self.read_request()
                 if not req:
+                    print("非法数据格式")
                     break
+                proto = req.proto
+                method = self.methods.get(proto, '')
+                if not method:
+                    print(f"无法识别的协议号：{proto}")
+                    break
+                func = getattr(self, method, None)
+                if func:
+                    func(req)
 
         except Exception as e:
             print(e)
@@ -46,17 +63,18 @@ class TCPHandler(socketserver.BaseRequestHandler):
         length_buffer = self.request.recv(4)
         if not length_buffer:
             return None
-        length = struct.unpack('!h', length_buffer)
+        length = struct.unpack('!i', length_buffer)
         buffer = self.request.recv(length[0])
         if length[0] != len(buffer):
             return None
         req = communication.request.Request()
-        req.ParseFromString(buffer)
+        if not req.ParseFromString(buffer):
+            return None
         return req
 
     def send_response(self, res: communication.request.Request):
-        data = res.SerializeAsString()
-        length = struct.pack('!h', len(data))
+        data = res.SerializeToString()
+        length = struct.pack('!i', len(data))
         self.request.send(length + data)
 
     def token_login(self, req: communication.request.Request):
@@ -71,7 +89,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                     self.is_login = True
                     break
             self.is_login = False
-            res.code = False
+            res.code = 403
             res.msg = '登入口令或数据包格式错误'
             break
 
@@ -83,6 +101,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
         res.msg = 'success'
         while True:
             dv = communication.request.DirectoryVerification()
+
             if not dv.ParseFromString(req.body):
                 res.code = 403
                 res.msg = '数据包格式不对'
@@ -109,7 +128,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 break
             hash_files = file_hash(all_files)
             differences = list()
-            for key, value in hash_files:
+            for key, value in hash_files.items():
                 client_iter = dv.contents.get(key, None)
                 if client_iter != value:
                     differences.append(f'{key} 两端文件hash值不一致')
@@ -145,8 +164,17 @@ class TCPHandler(socketserver.BaseRequestHandler):
                     res.msg = f'{path}: remove failed.'
                     break
             elif fdiff.status == FileChangeType.add.value:
-                
-
+                parent_dir = os.path.split(path)[0]
+                if not os.path.exists(parent_dir):
+                    os.makedirs(parent_dir, exist_ok=True)
+                with open(path, 'wb') as f:
+                    f.write(fdiff.content)
+            elif fdiff.status == FileChangeType.modified.value:
+                with open(path, 'wb') as f:
+                    f.write(fdiff.content)
+            else:
+                raise UnknownChangedFileTypeError()
+            break
         self.send_response(res)
 
 
@@ -160,6 +188,9 @@ def run_server(**kwargs):
 
     global watchPath
     watchPath = kwargs['path']
+    if not watchPath:
+        print('监控目录不能为空')
+        exit(-1)
     print(f"Listen on {port}. (Token={password}, WatchPath={watchPath})")
 
     server = socketserver.TCPServer((host, port), TCPHandler)

@@ -17,8 +17,11 @@ static QString random_string_8() {
     std::sort(tmp.begin(), tmp.end(),  [](const char, const char) {
         return qrand() % 47 > 23;
     });
+#ifndef PRODUCT
     return "";
+#else
     return QString::fromStdString(tmp).left(8);
+#endif
 }
 
 Server::Server(QObject *parent)
