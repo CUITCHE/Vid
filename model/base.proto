@@ -8,7 +8,7 @@ message Request {
     bytes body = 3;
 }
 
-message Responese {
+message Response {
     int32 code = 1; // 响应code
     int32 id = 2; // 本次请求的id，用于关联一次完整的请求
     string msg = 3;

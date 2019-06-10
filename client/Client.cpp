@@ -62,7 +62,7 @@ void Client::tokenLogin(const QString &token, const QString &name)
 {
     int queryId = _get_query_id();
     requestReact.insert(queryId, [=](const void *ptr) {
-        auto &res = *static_cast<const communication::Responese *>(ptr);
+        auto &res = *static_cast<const communication::Response *>(ptr);
         if (res.id() != queryId) {
             logger->warning("请求id不匹配");
             return ;
@@ -86,7 +86,7 @@ void Client::directoryVerification(const QString &rootPath, const QString &rootN
 {
     int queryId = _get_query_id();
     requestReact.insert(queryId, [=](const void *ptr) {
-        auto &res = *static_cast<const communication::Responese *>(ptr);
+        auto &res = *static_cast<const communication::Response *>(ptr);
         if (res.id() != queryId) {
             logger->warning("请求id不匹配");
             return;
@@ -149,7 +149,7 @@ void Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
 
     int queryId = _get_query_id();
     requestReact.insert(queryId, [queryId, this](const void *ptr) {
-        auto &res = *static_cast<const communication::Responese *>(ptr);
+        auto &res = *static_cast<const communication::Response *>(ptr);
         if (res.id() != queryId) {
             this->logger->warning("请求id不匹配");
             return;
@@ -175,7 +175,7 @@ void Client::onReadyRead()
         return;
     }
 
-    communication::Responese res;
+    communication::Response res;
     if (res.ParseFromString(buffer.toStdString()) == false) {
         logger->fatal("数据格式错误");
         exit(-1);

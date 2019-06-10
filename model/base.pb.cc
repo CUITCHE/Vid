@@ -21,10 +21,10 @@ class RequestDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Request> _instance;
 } _Request_default_instance_;
-class ResponeseDefaultTypeInternal {
+class ResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Responese> _instance;
-} _Responese_default_instance_;
+  ::google::protobuf::internal::ExplicitlyConstructed<Response> _instance;
+} _Response_default_instance_;
 }  // namespace communication
 static void InitDefaultsRequest_base_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -40,23 +40,23 @@ static void InitDefaultsRequest_base_2eproto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_Request_base_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsRequest_base_2eproto}, {}};
 
-static void InitDefaultsResponese_base_2eproto() {
+static void InitDefaultsResponse_base_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::communication::_Responese_default_instance_;
-    new (ptr) ::communication::Responese();
+    void* ptr = &::communication::_Response_default_instance_;
+    new (ptr) ::communication::Response();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::communication::Responese::InitAsDefaultInstance();
+  ::communication::Response::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_Responese_base_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsResponese_base_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_Response_base_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsResponse_base_2eproto}, {}};
 
 void InitDefaults_base_2eproto() {
   ::google::protobuf::internal::InitSCC(&scc_info_Request_base_2eproto.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Responese_base_2eproto.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_Response_base_2eproto.base);
 }
 
 ::google::protobuf::Metadata file_level_metadata_base_2eproto[2];
@@ -73,23 +73,23 @@ const ::google::protobuf::uint32 TableStruct_base_2eproto::offsets[] PROTOBUF_SE
   PROTOBUF_FIELD_OFFSET(::communication::Request, id_),
   PROTOBUF_FIELD_OFFSET(::communication::Request, body_),
   ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::communication::Responese, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::communication::Response, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::communication::Responese, code_),
-  PROTOBUF_FIELD_OFFSET(::communication::Responese, id_),
-  PROTOBUF_FIELD_OFFSET(::communication::Responese, msg_),
-  PROTOBUF_FIELD_OFFSET(::communication::Responese, body_),
+  PROTOBUF_FIELD_OFFSET(::communication::Response, code_),
+  PROTOBUF_FIELD_OFFSET(::communication::Response, id_),
+  PROTOBUF_FIELD_OFFSET(::communication::Response, msg_),
+  PROTOBUF_FIELD_OFFSET(::communication::Response, body_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::communication::Request)},
-  { 8, -1, sizeof(::communication::Responese)},
+  { 8, -1, sizeof(::communication::Response)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&::communication::_Request_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::communication::_Responese_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::communication::_Response_default_instance_),
 };
 
 ::google::protobuf::internal::AssignDescriptorsTable assign_descriptors_table_base_2eproto = {
@@ -101,16 +101,16 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
 const char descriptor_table_protodef_base_2eproto[] =
   "\n\nbase.proto\022\rcommunication\"K\n\007Request\022&"
   "\n\005proto\030\001 \001(\0162\027.communication.Protocol\022\n"
-  "\n\002id\030\002 \001(\005\022\014\n\004body\030\003 \001(\014\"@\n\tResponese\022\014\n"
-  "\004code\030\001 \001(\005\022\n\n\002id\030\002 \001(\005\022\013\n\003msg\030\003 \001(\t\022\014\n\004"
-  "body\030\004 \001(\014*V\n\010Protocol\022\016\n\nheart_beat\020\000\022\017"
-  "\n\013token_login\020\001\022\032\n\026directory_verificatio"
-  "n\020\002\022\r\n\tfile_diff\020\nb\006proto3"
+  "\n\002id\030\002 \001(\005\022\014\n\004body\030\003 \001(\014\"\?\n\010Response\022\014\n\004"
+  "code\030\001 \001(\005\022\n\n\002id\030\002 \001(\005\022\013\n\003msg\030\003 \001(\t\022\014\n\004b"
+  "ody\030\004 \001(\014*V\n\010Protocol\022\016\n\nheart_beat\020\000\022\017\n"
+  "\013token_login\020\001\022\032\n\026directory_verification"
+  "\020\002\022\r\n\tfile_diff\020\nb\006proto3"
   ;
 ::google::protobuf::internal::DescriptorTable descriptor_table_base_2eproto = {
   false, InitDefaults_base_2eproto, 
   descriptor_table_protodef_base_2eproto,
-  "base.proto", &assign_descriptors_table_base_2eproto, 266,
+  "base.proto", &assign_descriptors_table_base_2eproto, 265,
 };
 
 void AddDescriptors_base_2eproto() {
@@ -522,25 +522,25 @@ void Request::InternalSwap(Request* other) {
 
 // ===================================================================
 
-void Responese::InitAsDefaultInstance() {
+void Response::InitAsDefaultInstance() {
 }
-class Responese::HasBitSetters {
+class Response::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Responese::kCodeFieldNumber;
-const int Responese::kIdFieldNumber;
-const int Responese::kMsgFieldNumber;
-const int Responese::kBodyFieldNumber;
+const int Response::kCodeFieldNumber;
+const int Response::kIdFieldNumber;
+const int Response::kMsgFieldNumber;
+const int Response::kBodyFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Responese::Responese()
+Response::Response()
   : ::google::protobuf::Message(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:communication.Responese)
+  // @@protoc_insertion_point(constructor:communication.Response)
 }
-Responese::Responese(const Responese& from)
+Response::Response(const Response& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
@@ -555,12 +555,12 @@ Responese::Responese(const Responese& from)
   ::memcpy(&code_, &from.code_,
     static_cast<size_t>(reinterpret_cast<char*>(&id_) -
     reinterpret_cast<char*>(&code_)) + sizeof(id_));
-  // @@protoc_insertion_point(copy_constructor:communication.Responese)
+  // @@protoc_insertion_point(copy_constructor:communication.Response)
 }
 
-void Responese::SharedCtor() {
+void Response::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
-      &scc_info_Responese_base_2eproto.base);
+      &scc_info_Response_base_2eproto.base);
   msg_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   body_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&code_, 0, static_cast<size_t>(
@@ -568,27 +568,27 @@ void Responese::SharedCtor() {
       reinterpret_cast<char*>(&code_)) + sizeof(id_));
 }
 
-Responese::~Responese() {
-  // @@protoc_insertion_point(destructor:communication.Responese)
+Response::~Response() {
+  // @@protoc_insertion_point(destructor:communication.Response)
   SharedDtor();
 }
 
-void Responese::SharedDtor() {
+void Response::SharedDtor() {
   msg_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   body_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void Responese::SetCachedSize(int size) const {
+void Response::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Responese& Responese::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_Responese_base_2eproto.base);
+const Response& Response::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_Response_base_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void Responese::Clear() {
-// @@protoc_insertion_point(message_clear_start:communication.Responese)
+void Response::Clear() {
+// @@protoc_insertion_point(message_clear_start:communication.Response)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -602,9 +602,9 @@ void Responese::Clear() {
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Responese::_InternalParse(const char* begin, const char* end, void* object,
+const char* Response::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<Responese*>(object);
+  auto msg = static_cast<Response*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -633,7 +633,7 @@ const char* Responese::_InternalParse(const char* begin, const char* end, void* 
         if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        ctx->extra_parse_data().SetFieldName("communication.Responese.msg");
+        ctx->extra_parse_data().SetFieldName("communication.Response.msg");
         object = msg->mutable_msg();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
           parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
@@ -683,11 +683,11 @@ len_delim_till_end:
                                {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Responese::MergePartialFromCodedStream(
+bool Response::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:communication.Responese)
+  // @@protoc_insertion_point(parse_start:communication.Response)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -727,7 +727,7 @@ bool Responese::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->msg().data(), static_cast<int>(this->msg().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "communication.Responese.msg"));
+            "communication.Response.msg"));
         } else {
           goto handle_unusual;
         }
@@ -757,18 +757,18 @@ bool Responese::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:communication.Responese)
+  // @@protoc_insertion_point(parse_success:communication.Response)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:communication.Responese)
+  // @@protoc_insertion_point(parse_failure:communication.Response)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Responese::SerializeWithCachedSizes(
+void Response::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:communication.Responese)
+  // @@protoc_insertion_point(serialize_start:communication.Response)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -787,7 +787,7 @@ void Responese::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->msg().data(), static_cast<int>(this->msg().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "communication.Responese.msg");
+      "communication.Response.msg");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       3, this->msg(), output);
   }
@@ -802,12 +802,12 @@ void Responese::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         _internal_metadata_.unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:communication.Responese)
+  // @@protoc_insertion_point(serialize_end:communication.Response)
 }
 
-::google::protobuf::uint8* Responese::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* Response::InternalSerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:communication.Responese)
+  // @@protoc_insertion_point(serialize_to_array_start:communication.Response)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -826,7 +826,7 @@ void Responese::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->msg().data(), static_cast<int>(this->msg().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "communication.Responese.msg");
+      "communication.Response.msg");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         3, this->msg(), target);
@@ -843,12 +843,12 @@ void Responese::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:communication.Responese)
+  // @@protoc_insertion_point(serialize_to_array_end:communication.Response)
   return target;
 }
 
-size_t Responese::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:communication.Responese)
+size_t Response::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:communication.Response)
   size_t total_size = 0;
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -893,23 +893,23 @@ size_t Responese::ByteSizeLong() const {
   return total_size;
 }
 
-void Responese::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:communication.Responese)
+void Response::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:communication.Response)
   GOOGLE_DCHECK_NE(&from, this);
-  const Responese* source =
-      ::google::protobuf::DynamicCastToGenerated<Responese>(
+  const Response* source =
+      ::google::protobuf::DynamicCastToGenerated<Response>(
           &from);
   if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:communication.Responese)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:communication.Response)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:communication.Responese)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:communication.Response)
     MergeFrom(*source);
   }
 }
 
-void Responese::MergeFrom(const Responese& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:communication.Responese)
+void Response::MergeFrom(const Response& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:communication.Response)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -931,29 +931,29 @@ void Responese::MergeFrom(const Responese& from) {
   }
 }
 
-void Responese::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:communication.Responese)
+void Response::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:communication.Response)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void Responese::CopyFrom(const Responese& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:communication.Responese)
+void Response::CopyFrom(const Response& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:communication.Response)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool Responese::IsInitialized() const {
+bool Response::IsInitialized() const {
   return true;
 }
 
-void Responese::Swap(Responese* other) {
+void Response::Swap(Response* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void Responese::InternalSwap(Responese* other) {
+void Response::InternalSwap(Response* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   msg_.Swap(&other->msg_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -964,7 +964,7 @@ void Responese::InternalSwap(Responese* other) {
   swap(id_, other->id_);
 }
 
-::google::protobuf::Metadata Responese::GetMetadata() const {
+::google::protobuf::Metadata Response::GetMetadata() const {
   ::google::protobuf::internal::AssignDescriptors(&::assign_descriptors_table_base_2eproto);
   return ::file_level_metadata_base_2eproto[kIndexInFileMessages];
 }
@@ -977,8 +977,8 @@ namespace protobuf {
 template<> PROTOBUF_NOINLINE ::communication::Request* Arena::CreateMaybeMessage< ::communication::Request >(Arena* arena) {
   return Arena::CreateInternal< ::communication::Request >(arena);
 }
-template<> PROTOBUF_NOINLINE ::communication::Responese* Arena::CreateMaybeMessage< ::communication::Responese >(Arena* arena) {
-  return Arena::CreateInternal< ::communication::Responese >(arena);
+template<> PROTOBUF_NOINLINE ::communication::Response* Arena::CreateMaybeMessage< ::communication::Response >(Arena* arena) {
+  return Arena::CreateInternal< ::communication::Response >(arena);
 }
 }  // namespace protobuf
 }  // namespace google

@@ -92,7 +92,7 @@ void Server::onClientDisconnected()
     client = nullptr;
 }
 
-void Server::sendResponse(const communication::Responese &res, QTcpSocket *sock)
+void Server::sendResponse(const communication::Response &res, QTcpSocket *sock)
 {
     QByteArray data = QByteArray::fromStdString(res.SerializeAsString());
     QByteArray length = SerializedTool::intToChar(data.count());
@@ -102,7 +102,7 @@ void Server::sendResponse(const communication::Responese &res, QTcpSocket *sock)
 
 void Server::onTokenLogin(const communication::Request &req, QTcpSocket *sock)
 {
-    communication::Responese res;
+    communication::Response res;
     res.set_id(req.id());
     communication::request::TokenLogin tokenLogin;
     do {
@@ -127,7 +127,7 @@ extern QMap<QString, QString> files_hahs(QStringList paths);
 
 void Server::onDirectoryVerification(const communication::Request &req, QTcpSocket *sock)
 {
-    communication::Responese res;
+    communication::Response res;
     res.set_id(req.id());
 
     communication::request::DirectoryVerification dv;
@@ -144,46 +144,43 @@ void Server::onDirectoryVerification(const communication::Request &req, QTcpSock
             res.set_msg("监控的根目录名不一致");
             break;
         }
-        QStringList all;
+        QStringList all; // TODO: 改为相对路径，程序可在任意目录下监控任意目录
         QStringList nameFilters;
         nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
         FileMonitor::obtainAllFile(curDir, all, nameFilters);
-        const auto &contents = dv.contents();
+
         for (int i=0; i<all.size(); ++i) {
             all[0] = all[0].mid(watchPath.length() + 1);
         }
+        const auto &contents = dv.contents();
 
-        if (contents.size() != static_cast<ulong>(all.count())) {
-            res.set_code(4);
-            auto begin = contents.begin();
-            QStringList clientFiles;
-            while (begin != contents.end()) {
-                clientFiles << QString::fromStdString(begin->first);
-                ++begin;
-            };
-            QSet<QString> server = QSet<QString>::fromList(all);
-            QSet<QString> client = QSet<QString>::fromList(clientFiles);
-            auto intersection = server.intersect(client);
-            QString msg;
-            for (auto &path : server.subtract(intersection)) {
-                msg.append(path).append(": 远端存在的文件，本端不存在\n");
-            }
-            for (auto &path : client.subtract(intersection)) {
-                msg.append(path).append(": 本端存在的文件，远端不存在\n");
-            }
-            res.set_msg(msg.toStdString());
-            break;
+        auto begin = contents.begin();
+        QStringList clientFiles;
+        while (begin != contents.end()) {
+            clientFiles << QString::fromStdString(begin->first);
+            ++begin;
+        };
+        QSet<QString> server = QSet<QString>::fromList(all);
+        QSet<QString> client = QSet<QString>::fromList(clientFiles);
+        auto intersection = server.intersect(client);
+        QString msg;
+        for (auto &path : server.subtract(intersection)) {
+            msg.append(path).append(": 远端存在的文件，本端不存在\n");
         }
+        for (auto &path : client.subtract(intersection)) {
+            msg.append(path).append(": 本端存在的文件，远端不存在\n");
+        }
+        if (msg.length() != 0) {
+            res.set_code(4);
+            res.set_msg(msg.toStdString());
+        }
+
         auto hash_files = files_hahs(all);
         auto iter = hash_files.begin();
         QStringList differences;
         while (iter != hash_files.end()) {
             auto client_iter = contents.find(iter.key().toStdString());
-            if (client_iter == contents.end()) {
-                QString msg = iter.value();
-                msg.append(": 远端不存在这个文件\n");
-                differences << msg;
-            } else if (iter.value().toStdString() != client_iter->second) {
+            if (iter.value().toStdString() != client_iter->second) {
                 QString msg = iter.value();
                 msg.append(": 两端文件hash值不一致\n");
                 differences << msg;
@@ -207,7 +204,7 @@ void Server::onDirectoryVerification(const communication::Request &req, QTcpSock
 
 void Server::onFileDiff(const communication::Request &req, QTcpSocket *sock)
 {
-    communication::Responese res;
+    communication::Response res;
     res.set_id(req.id());
     do {
         communication::request::FileDiff fdiff;

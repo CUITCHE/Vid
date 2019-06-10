@@ -53,14 +53,14 @@ namespace communication {
 class Request;
 class RequestDefaultTypeInternal;
 extern RequestDefaultTypeInternal _Request_default_instance_;
-class Responese;
-class ResponeseDefaultTypeInternal;
-extern ResponeseDefaultTypeInternal _Responese_default_instance_;
+class Response;
+class ResponseDefaultTypeInternal;
+extern ResponseDefaultTypeInternal _Response_default_instance_;
 }  // namespace communication
 namespace google {
 namespace protobuf {
 template<> ::communication::Request* Arena::CreateMaybeMessage<::communication::Request>(Arena*);
-template<> ::communication::Responese* Arena::CreateMaybeMessage<::communication::Responese>(Arena*);
+template<> ::communication::Response* Arena::CreateMaybeMessage<::communication::Response>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace communication {
@@ -224,25 +224,25 @@ class Request :
 };
 // -------------------------------------------------------------------
 
-class Responese :
-    public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:communication.Responese) */ {
+class Response :
+    public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:communication.Response) */ {
  public:
-  Responese();
-  virtual ~Responese();
+  Response();
+  virtual ~Response();
 
-  Responese(const Responese& from);
+  Response(const Response& from);
 
-  inline Responese& operator=(const Responese& from) {
+  inline Response& operator=(const Response& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  Responese(Responese&& from) noexcept
-    : Responese() {
+  Response(Response&& from) noexcept
+    : Response() {
     *this = ::std::move(from);
   }
 
-  inline Responese& operator=(Responese&& from) noexcept {
+  inline Response& operator=(Response&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -254,34 +254,34 @@ class Responese :
   static const ::google::protobuf::Descriptor* descriptor() {
     return default_instance().GetDescriptor();
   }
-  static const Responese& default_instance();
+  static const Response& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Responese* internal_default_instance() {
-    return reinterpret_cast<const Responese*>(
-               &_Responese_default_instance_);
+  static inline const Response* internal_default_instance() {
+    return reinterpret_cast<const Response*>(
+               &_Response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     1;
 
-  void Swap(Responese* other);
-  friend void swap(Responese& a, Responese& b) {
+  void Swap(Response* other);
+  friend void swap(Response& a, Response& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline Responese* New() const final {
-    return CreateMaybeMessage<Responese>(nullptr);
+  inline Response* New() const final {
+    return CreateMaybeMessage<Response>(nullptr);
   }
 
-  Responese* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<Responese>(arena);
+  Response* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<Response>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const Responese& from);
-  void MergeFrom(const Responese& from);
+  void CopyFrom(const Response& from);
+  void MergeFrom(const Response& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -303,7 +303,7 @@ class Responese :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(Responese* other);
+  void InternalSwap(Response* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -359,7 +359,7 @@ class Responese :
   ::google::protobuf::int32 id() const;
   void set_id(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:communication.Responese)
+  // @@protoc_insertion_point(class_scope:communication.Response)
  private:
   class HasBitSetters;
 
@@ -465,140 +465,140 @@ inline void Request::set_allocated_body(::std::string* body) {
 
 // -------------------------------------------------------------------
 
-// Responese
+// Response
 
 // int32 code = 1;
-inline void Responese::clear_code() {
+inline void Response::clear_code() {
   code_ = 0;
 }
-inline ::google::protobuf::int32 Responese::code() const {
-  // @@protoc_insertion_point(field_get:communication.Responese.code)
+inline ::google::protobuf::int32 Response::code() const {
+  // @@protoc_insertion_point(field_get:communication.Response.code)
   return code_;
 }
-inline void Responese::set_code(::google::protobuf::int32 value) {
+inline void Response::set_code(::google::protobuf::int32 value) {
   
   code_ = value;
-  // @@protoc_insertion_point(field_set:communication.Responese.code)
+  // @@protoc_insertion_point(field_set:communication.Response.code)
 }
 
 // int32 id = 2;
-inline void Responese::clear_id() {
+inline void Response::clear_id() {
   id_ = 0;
 }
-inline ::google::protobuf::int32 Responese::id() const {
-  // @@protoc_insertion_point(field_get:communication.Responese.id)
+inline ::google::protobuf::int32 Response::id() const {
+  // @@protoc_insertion_point(field_get:communication.Response.id)
   return id_;
 }
-inline void Responese::set_id(::google::protobuf::int32 value) {
+inline void Response::set_id(::google::protobuf::int32 value) {
   
   id_ = value;
-  // @@protoc_insertion_point(field_set:communication.Responese.id)
+  // @@protoc_insertion_point(field_set:communication.Response.id)
 }
 
 // string msg = 3;
-inline void Responese::clear_msg() {
+inline void Response::clear_msg() {
   msg_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Responese::msg() const {
-  // @@protoc_insertion_point(field_get:communication.Responese.msg)
+inline const ::std::string& Response::msg() const {
+  // @@protoc_insertion_point(field_get:communication.Response.msg)
   return msg_.GetNoArena();
 }
-inline void Responese::set_msg(const ::std::string& value) {
+inline void Response::set_msg(const ::std::string& value) {
   
   msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:communication.Responese.msg)
+  // @@protoc_insertion_point(field_set:communication.Response.msg)
 }
 #if LANG_CXX11
-inline void Responese::set_msg(::std::string&& value) {
+inline void Response::set_msg(::std::string&& value) {
   
   msg_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:communication.Responese.msg)
+  // @@protoc_insertion_point(field_set_rvalue:communication.Response.msg)
 }
 #endif
-inline void Responese::set_msg(const char* value) {
+inline void Response::set_msg(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:communication.Responese.msg)
+  // @@protoc_insertion_point(field_set_char:communication.Response.msg)
 }
-inline void Responese::set_msg(const char* value, size_t size) {
+inline void Response::set_msg(const char* value, size_t size) {
   
   msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:communication.Responese.msg)
+  // @@protoc_insertion_point(field_set_pointer:communication.Response.msg)
 }
-inline ::std::string* Responese::mutable_msg() {
+inline ::std::string* Response::mutable_msg() {
   
-  // @@protoc_insertion_point(field_mutable:communication.Responese.msg)
+  // @@protoc_insertion_point(field_mutable:communication.Response.msg)
   return msg_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Responese::release_msg() {
-  // @@protoc_insertion_point(field_release:communication.Responese.msg)
+inline ::std::string* Response::release_msg() {
+  // @@protoc_insertion_point(field_release:communication.Response.msg)
   
   return msg_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Responese::set_allocated_msg(::std::string* msg) {
+inline void Response::set_allocated_msg(::std::string* msg) {
   if (msg != nullptr) {
     
   } else {
     
   }
   msg_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), msg);
-  // @@protoc_insertion_point(field_set_allocated:communication.Responese.msg)
+  // @@protoc_insertion_point(field_set_allocated:communication.Response.msg)
 }
 
 // bytes body = 4;
-inline void Responese::clear_body() {
+inline void Response::clear_body() {
   body_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Responese::body() const {
-  // @@protoc_insertion_point(field_get:communication.Responese.body)
+inline const ::std::string& Response::body() const {
+  // @@protoc_insertion_point(field_get:communication.Response.body)
   return body_.GetNoArena();
 }
-inline void Responese::set_body(const ::std::string& value) {
+inline void Response::set_body(const ::std::string& value) {
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:communication.Responese.body)
+  // @@protoc_insertion_point(field_set:communication.Response.body)
 }
 #if LANG_CXX11
-inline void Responese::set_body(::std::string&& value) {
+inline void Response::set_body(::std::string&& value) {
   
   body_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:communication.Responese.body)
+  // @@protoc_insertion_point(field_set_rvalue:communication.Response.body)
 }
 #endif
-inline void Responese::set_body(const char* value) {
+inline void Response::set_body(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:communication.Responese.body)
+  // @@protoc_insertion_point(field_set_char:communication.Response.body)
 }
-inline void Responese::set_body(const void* value, size_t size) {
+inline void Response::set_body(const void* value, size_t size) {
   
   body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:communication.Responese.body)
+  // @@protoc_insertion_point(field_set_pointer:communication.Response.body)
 }
-inline ::std::string* Responese::mutable_body() {
+inline ::std::string* Response::mutable_body() {
   
-  // @@protoc_insertion_point(field_mutable:communication.Responese.body)
+  // @@protoc_insertion_point(field_mutable:communication.Response.body)
   return body_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Responese::release_body() {
-  // @@protoc_insertion_point(field_release:communication.Responese.body)
+inline ::std::string* Response::release_body() {
+  // @@protoc_insertion_point(field_release:communication.Response.body)
   
   return body_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Responese::set_allocated_body(::std::string* body) {
+inline void Response::set_allocated_body(::std::string* body) {
   if (body != nullptr) {
     
   } else {
     
   }
   body_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), body);
-  // @@protoc_insertion_point(field_set_allocated:communication.Responese.body)
+  // @@protoc_insertion_point(field_set_allocated:communication.Response.body)
 }
 
 #ifdef __GNUC__

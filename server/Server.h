@@ -9,7 +9,7 @@ class QTcpServer;
 class QTcpSocket;
 
 namespace communication {
-    class Responese;
+    class Response;
     class Request;
 }
 
@@ -26,7 +26,7 @@ public slots:
     void onClientReadyRead();
     void onClientDisconnected();
 protected:
-    void sendResponse(const communication::Responese &res, QTcpSocket *sock);
+    void sendResponse(const communication::Response &res, QTcpSocket *sock);
     void onTokenLogin(const communication::Request &req, QTcpSocket *sock);
     void onDirectoryVerification(const communication::Request &req, QTcpSocket *sock);
     void onFileDiff(const communication::Request &req, QTcpSocket *sock);
