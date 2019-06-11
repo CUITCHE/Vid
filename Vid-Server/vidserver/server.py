@@ -12,8 +12,8 @@ from enum import Enum
 
 
 class FileChangeType(Enum):
-    modified = 1,
-    add = 2,
+    modified = 1
+    add = 2
     removed = 3
 
 
@@ -24,7 +24,7 @@ def random_token(length):
 
 password = ''  # random_token(8)
 watchPath = ''
-fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue)$')
+fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$')
 
 
 class UnknownChangedFileTypeError(Exception):
@@ -45,7 +45,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             while True:
                 req = self.read_request()
                 if not req:
-                    print("非法数据格式")
+                    print("非法数据格式或链接已断开")
                     break
                 proto = req.proto
                 method = self.methods.get(proto, '')
@@ -131,7 +131,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             for key, value in hash_files.items():
                 client_iter = dv.contents.get(key, None)
                 if client_iter != value:
-                    differences.append(f'{key} 两端文件hash值不一致')
+                    differences.append(f'[{key}] 两端文件hash值不一致')
             if len(differences):
                 res.code = 5
                 res.msg = '\n'.join(differences)
@@ -140,6 +140,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
         self.send_response(res)
 
     def file_diff(self, req: communication.request.Request):
+        print("diff")
         res = communication.response.Response()
         res.id = req.id
         res.msg = 'success'
@@ -153,7 +154,8 @@ class TCPHandler(socketserver.BaseRequestHandler):
             if not path.endswith('/'):
                 path += '/'
             path += fdiff.relative_path
-            if fdiff.status == FileChangeType.removed.value:
+            status = FileChangeType(fdiff.status)
+            if status == FileChangeType.removed:
                 if not os.path.exists(path):
                     break
                 try:
@@ -163,14 +165,16 @@ class TCPHandler(socketserver.BaseRequestHandler):
                     res.code = 404
                     res.msg = f'{path}: remove failed.'
                     break
-            elif fdiff.status == FileChangeType.add.value:
+            elif status == FileChangeType.add:
+                print(f'raw path: {path}')
                 parent_dir = os.path.split(path)[0]
+                print(f'parent dir: {parent_dir}')
                 if not os.path.exists(parent_dir):
                     os.makedirs(parent_dir, exist_ok=True)
-                with open(path, 'wb') as f:
+                with open(path, 'w') as f:
                     f.write(fdiff.content)
-            elif fdiff.status == FileChangeType.modified.value:
-                with open(path, 'wb') as f:
+            elif status == FileChangeType.modified:
+                with open(path, 'w') as f:
                     f.write(fdiff.content)
             else:
                 raise UnknownChangedFileTypeError()
@@ -191,10 +195,19 @@ def run_server(**kwargs):
     if not watchPath:
         print('监控目录不能为空')
         exit(-1)
+    if not os.path.exists(watchPath):
+        print(f'\033[1;31m{watchPath} 不存在\033[0m')
+        exit(-1)
     print(f"Listen on {port}. (Token={password}, WatchPath={watchPath})")
-
     server = socketserver.TCPServer((host, port), TCPHandler)
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except Exception as e:
+        print(e)
+    finally:
+        print('\n\033[1;31mserver closed.\033[0m')
+        server.shutdown()
+        server.server_close()
 
 
 def list_all_files(path, all_files: list):

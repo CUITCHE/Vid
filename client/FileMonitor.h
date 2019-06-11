@@ -26,7 +26,7 @@ public:
     void start(const QString &path); // need directory
     void stop();
 
-    static void obtainAllFile(const QDir &dir, QStringList &all, const QStringList &nameFilters);
+    static void obtainAllFile(const QDir &dir, QStringList &allFiles, QStringList *allDirectories, const QStringList &nameFilters);
 signals:
     void fileChanged(const QString &path, FileChangeType type);
 public slots:

@@ -150,7 +150,7 @@ void Server::onDirectoryVerification(const communication::Request &req, QTcpSock
         QStringList all; // TODO: 改为相对路径，程序可在任意目录下监控任意目录
         QStringList nameFilters;
         nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
-        FileMonitor::obtainAllFile(curDir, all, nameFilters);
+        FileMonitor::obtainAllFile(curDir, all, nullptr, nameFilters);
 
         for (int i=0; i<all.size(); ++i) {
             all[0] = all[0].mid(watchPath.length() + 1);

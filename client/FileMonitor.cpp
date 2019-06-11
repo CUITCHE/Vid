@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMap>
+#include <QSet>
 
 struct FileInfo {
     QString filepath;
@@ -37,9 +38,12 @@ static void obtainNewFiles(const QDir &dir,
     for (auto fileInfo: fileInfoList) {
         if (fileInfo.isDir()) {
             auto dir = QDir(fileInfo.filePath());
+            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < 100) { // 新添加的目录
+                maybayNew << fileInfo;
+            }
             obtainNewFiles(dir, maybayNew, nameFilters, matchDate, exitsFiles);
         } else {
-            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < 1000) { // 去除系统影响，获取1s内改动的文件
+            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < 100) { // 去除系统影响，获取100ms内改动的文件
                 maybayNew << fileInfo;
             } else if (!exitsFiles.contains(fileInfo.filePath())) {
                 // 虽然不是最近修改，但是从其它地方拷贝过来，也算新增
@@ -71,9 +75,11 @@ void FileMonitor::start(const QString &path) {
     watcher->addPath(path);
     QDir dir(path);
     QStringList nameFilters;
+    QStringList allDirectories;
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
-    obtainAllFile(dir, existsFilePath, nameFilters);
-    logger->i("已存在文件数量：{}. => {}", existsFilePath.count());
+    obtainAllFile(dir, existsFilePath, &allDirectories, nameFilters);
+    watcher->addPaths(allDirectories); // 监听每一级目录
+    logger->i("已存在文件数量：{}. => {}", existsFilePath.count(), existsFilePath.join(", "));
 }
 
 
@@ -88,21 +94,23 @@ void FileMonitor::stop() {
     existsFilePath.clear();
 }
 
-void FileMonitor::obtainAllFile(const QDir &dir, QStringList &all, const QStringList &nameFilters)
+void FileMonitor::obtainAllFile(const QDir &dir, QStringList &allFiles, QStringList *allDirectories, const QStringList &nameFilters)
 {
     QFileInfoList fileInfoList = dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
     for (auto fileInfo: fileInfoList) {
         if (fileInfo.isDir()) {
             auto dir = QDir(fileInfo.filePath());
-            obtainAllFile(dir, all, nameFilters);
+            allDirectories ? allDirectories->append(dir.path()) : qt_noop();
+            obtainAllFile(dir, allFiles, allDirectories, nameFilters);
         } else {
-            all << fileInfo.filePath();
+            allFiles << fileInfo.filePath();
         }
     }
 }
 
 void FileMonitor::onFileChanged(const QString &path) {
     QFile f(path);
+    logger->i("filepath[{}] has changed.", path);
     if (f.exists()) {
         emit fileChanged(path, f.exists() ? modified : removed);
     } else {
@@ -130,6 +138,7 @@ void FileMonitor::onDirectoryChanged(const QString &path) {
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
     QFileInfoList changedFiles;
     obtainNewFiles(dir, changedFiles, nameFilters, QDateTime::currentDateTime(), existsFilePath);
+    logger->i("path[{}] has changed.", path);
     if (changedFiles.isEmpty()) {
         _remove_not_exists_file(existsFilePath, this);
     } else {

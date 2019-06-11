@@ -22,7 +22,9 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("Vid");
     QCoreApplication::setApplicationVersion("1.0.0");
-
+    QFileInfo file("/tmp/test1/te");
+    qDebug() << file.path();
+    exit(0);
 #ifdef PRODUCT
     _main();
 #else
@@ -101,9 +103,9 @@ void testLogin() {
         qDebug() << "client start";
         ControlClient *control = new ControlClient();
         control->setLoginInfo("hejunqiu", "");
-        control->start("/tmp/test1/work", "localhost", 10999);
+        control->start("/tmp/test1/work", "localhost", 9010);
     } else {
         Server *server = new Server;
-        server->startListen(10999, "/tmp/test2/work");
+        server->startListen(9010, "/tmp/test2/work");
     }
 }

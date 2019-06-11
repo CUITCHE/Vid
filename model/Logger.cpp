@@ -116,7 +116,12 @@ void Logger::write(const QString &content, Level level)
     text.append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz")).append("] ").append(content);
     _string_format_append(text, level);
     lock.acquire();
+#ifdef PRODUCT
     endl(out() << text);
+#else
+    QTextStream out(stdout);
+    endl(out << text);
+#endif
     lock.release();
 }
 

@@ -41,7 +41,7 @@ ControlClient::ControlClient(QObject *parent)
         QStringList nameFilters;
         nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
         QStringList existsFilePath;
-        FileMonitor::obtainAllFile(dir, existsFilePath, nameFilters);
+        FileMonitor::obtainAllFile(dir, existsFilePath, nullptr, nameFilters);
         auto contents = files_hahs(existsFilePath);
         this->client->directoryVerification(this->watchPath, dir.dirName(), contents);
     });
