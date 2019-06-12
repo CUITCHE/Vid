@@ -144,6 +144,9 @@ void FileMonitor::onDirectoryChanged(const QString &path) {
     } else {
         auto files = watcher->files();
         for (auto file : changedFiles) {
+            if (file.isDir()) {
+                watcher->directories().contains(file.filePath())
+            }
             auto path = file.filePath();
             if (!files.contains(path)) {
                 watcher->addPath(path);
