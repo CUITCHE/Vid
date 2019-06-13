@@ -27,9 +27,11 @@ install:
   - if [ "$QT_BASE" = "57" ]; then
       if [ "$TRAVIS_OS_NAME" = "linux" ]; then
         sudo apt-get install -qq qt57base; source /opt/qt57/bin/qt57-env.sh;
+        sudo apt-get install protobuf
       else
         brew install qt5;
         brew link --force qt5;
+        brew install protobuf;
       fi
     fi
 
