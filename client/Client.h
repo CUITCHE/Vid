@@ -15,7 +15,7 @@ class QTcpSocket;
 class QFile;
 
 
-class Client : public QObject, public LoggerI
+class Client : public QObject, public LoggerI<Client>
 {
     Q_OBJECT
 public:
@@ -30,7 +30,6 @@ public:
 
     void tokenLogin(const QString &token, const QString &name);
     void directoryVerification(const QString &rootPath, const QString &rootName, const QMap<FileName, FileMD5> &contents);
-    int32_t fileDiff(const QString &relativePath, QFile *file, int32_t status);
 signals:
     void connected();
     void disconnected();
@@ -39,6 +38,7 @@ signals:
     void diffComplete(int32_t queryId, bool success); // 一次diff完成
 public slots:
     void onReadyRead();
+    void fileDiff(const QString &relativePath, const QString &absolutePath, qint32 status);
 protected:
     int32_t _get_query_id();
 private:

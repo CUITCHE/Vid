@@ -8,7 +8,7 @@
 class Client;
 class FileMonitor;
 
-class ControlClient : public QThread, public LoggerI
+class ControlClient : public QThread, public LoggerI<ControlClient>
 {
     Q_OBJECT
 public:
@@ -20,7 +20,7 @@ public:
 protected:
     void run() override;
 signals:
-
+    void diff(const QString &relativePath, const QString &absolutePath, qint32 status);
 public slots:
     void onFileChanged(const QString &path, FileMonitor::FileChangeType type);
     void onDiffComplete(int32_t queryId, bool success);

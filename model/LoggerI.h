@@ -3,10 +3,13 @@
 
 #include "model/Logger.h"
 
+template<class T>
 class LoggerI
 {
 public:
-    LoggerI(QObject *parent = nullptr);
+    explicit LoggerI(QObject *parent = nullptr)
+    : logger(Logger::logger(typeid(T).name(), parent))
+    {}
 protected:
     Logger *logger;
 };

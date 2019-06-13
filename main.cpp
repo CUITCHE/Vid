@@ -22,9 +22,6 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("Vid");
     QCoreApplication::setApplicationVersion("1.0.0");
-    QFileInfo file("/tmp/test1/te");
-    qDebug() << file.path();
-    exit(0);
 #ifdef PRODUCT
     _main();
 #else

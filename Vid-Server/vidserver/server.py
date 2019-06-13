@@ -9,6 +9,9 @@ import os
 import re
 import vidserver.communication as communication
 from enum import Enum
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
 
 
 class FileChangeType(Enum):
@@ -31,6 +34,14 @@ class UnknownChangedFileTypeError(Exception):
     pass
 
 
+class ProtocolLengthError(Exception):
+    pass
+
+
+class ProtocolReceiveError(Exception):
+    pass
+
+
 class TCPHandler(socketserver.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         self.is_login = True
@@ -40,36 +51,31 @@ class TCPHandler(socketserver.BaseRequestHandler):
         super().__init__(request, client_address, server)
 
     def handle(self):
-
-        try:
-            while True:
+        logger = logging.getLogger("TCPHandler.handle")
+        while True:
+            try:
                 req = self.read_request()
-                if not req:
-                    print("非法数据格式或链接已断开")
-                    break
                 proto = req.proto
                 method = self.methods.get(proto, '')
                 if not method:
-                    print(f"无法识别的协议号：{proto}")
-                    break
+                    raise Exception(f"无法识别的协议号：{proto}")
                 func = getattr(self, method, None)
                 if func:
                     func(req)
-
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                logger.error("%s", e)
 
     def read_request(self):
         length_buffer = self.request.recv(4)
         if not length_buffer:
-            return None
+            raise Exception("未能正确获取协议长度")
         length = struct.unpack('!i', length_buffer)
         buffer = self.request.recv(length[0])
         if length[0] != len(buffer):
-            return None
+            raise Exception(f"Excepted {length[0]} data, but received {len(buffer)}.")
         req = communication.request.Request()
         if not req.ParseFromString(buffer):
-            return None
+            raise Exception("未能从data中实例化Request")
         return req
 
     def send_response(self, res: communication.request.Request):
@@ -140,7 +146,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
         self.send_response(res)
 
     def file_diff(self, req: communication.request.Request):
-        print("diff")
+        logger = logging.getLogger("TCPHandler.file_diff")
         res = communication.response.Response()
         res.id = req.id
         res.msg = 'success'
@@ -161,14 +167,12 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 try:
                     os.remove(path)
                 except Exception as e:
-                    print(e)
+                    logger.warning("%s", e)
                     res.code = 404
                     res.msg = f'{path}: remove failed.'
                     break
             elif status == FileChangeType.add:
-                print(f'raw path: {path}')
                 parent_dir = os.path.split(path)[0]
-                print(f'parent dir: {parent_dir}')
                 if not os.path.exists(parent_dir):
                     os.makedirs(parent_dir, exist_ok=True)
                 with open(path, 'w') as f:
@@ -178,34 +182,39 @@ class TCPHandler(socketserver.BaseRequestHandler):
                     f.write(fdiff.content)
             else:
                 raise UnknownChangedFileTypeError()
+            logger.info(f"更新文件: {path}, 操作={status}")
             break
         self.send_response(res)
 
 
 def run_server(**kwargs):
+    logger = logging.getLogger("run_server")
+
     host = kwargs['host']
-    if not host:
-        host = 'localhost'
     port = kwargs['port']
-    if not port:
-        port = 9000
 
     global watchPath
     watchPath = kwargs['path']
+
     if not watchPath:
-        print('监控目录不能为空')
+        logger.error('监控目录不能为空')
         exit(-1)
+
     if not os.path.exists(watchPath):
-        print(f'\033[1;31m{watchPath} 不存在\033[0m')
+        logger.error(f'\033[1;31m{watchPath} 不存在\033[0m')
         exit(-1)
-    print(f"Listen on {port}. (Token={password}, WatchPath={watchPath})")
+    logger.info(f"Listen on {port}. (Token={password}, WatchPath={watchPath})")
     server = socketserver.TCPServer((host, port), TCPHandler)
+
+    global fileNameFilter
+    filters = kwargs['filter']  # .*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$'
+    fileNameFilter = re.compile(f".*(.{'|.'.join(filters)})$")
     try:
         server.serve_forever()
     except Exception as e:
-        print(e)
+        logger.error("%s", e)
     finally:
-        print('\n\033[1;31mserver closed.\033[0m')
+        logger.info('\n\033[1;31mserver closed.\033[0m')
         server.shutdown()
         server.server_close()
 

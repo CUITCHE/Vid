@@ -3,11 +3,12 @@
 
 #include <QObject>
 #include "model/LoggerI.h"
+#include <QFileInfoList>
 
 class QDir;
 
 
-class FileMonitor : public QObject, public LoggerI
+class FileMonitor : public QObject, public LoggerI<FileMonitor>
 {
     Q_OBJECT
 public:
@@ -28,8 +29,12 @@ public:
 signals:
     void fileChanged(const QString &path, FileChangeType type);
 public slots:
-    void onFileChanged(const QString &path);
     void onDirectoryChanged(const QString &path);
+protected:
+    void obtainNewFiles(const QDir &dir,
+                        QFileInfoList &maybayNew,
+                        const QStringList &nameFilters,
+                        const QDateTime &matchDate);
 private:
     struct FileMonitorPrivate *data;
 

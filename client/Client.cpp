@@ -116,8 +116,13 @@ void Client::directoryVerification(const QString &rootPath, const QString &rootN
 
 }
 
-int32_t Client::fileDiff(const QString &relativePath, QFile *file, int32_t status)
+void Client::fileDiff(const QString &relativePath, const QString &absolutePath, int32_t status)
 {
+    QFile *file = nullptr;
+    if (status != FileMonitor::removed) {
+        file = new QFile(absolutePath);
+    }
+    logger->d("开始diff={}.", relativePath);
     communication::request::FileDiff body;
     body.set_relative_path(relativePath.toStdString());
     body.set_status(status);
@@ -128,10 +133,15 @@ int32_t Client::fileDiff(const QString &relativePath, QFile *file, int32_t statu
 
         if (file->size() > 10 * 1024 * 1024) {
             logger->i("{}：文件大于10M，请手动传输", file->fileName());
-            return -1;
+            return;
         }
         QByteArray content = file->readAll();
         body.set_content(content.toStdString());
+    }
+    if (file) {
+        file->close();
+        delete file;
+        file = nullptr;
     }
 
     int queryId = _get_query_id();
@@ -145,7 +155,11 @@ int32_t Client::fileDiff(const QString &relativePath, QFile *file, int32_t statu
                 break;
             }
         } while (0);
-        qWarning() << "file diff：" << res.msg().c_str();
+        if (success) {
+            this->logger->i("file diff={}", res.msg());
+        } else {
+            this->logger->w("file diff={}", res.msg());
+        }
         emit this->diffComplete(queryId, success);
     });
 
@@ -154,7 +168,6 @@ int32_t Client::fileDiff(const QString &relativePath, QFile *file, int32_t statu
     req.set_proto(communication::Protocol::file_diff);
     req.set_body(body.SerializeAsString());
     sendRequest(req);
-    return queryId;
 }
 
 void Client::onReadyRead()

@@ -38,7 +38,6 @@ FileMonitor::FileMonitor(QObject *parent)
     , LoggerI(parent)
     , data(new FileMonitorPrivate)
 {
-    connect(data->watcher, &QFileSystemWatcher::fileChanged, this, &FileMonitor::onFileChanged);
     connect(data->watcher, &QFileSystemWatcher::directoryChanged, this, &FileMonitor::onDirectoryChanged);
 }
 
@@ -46,30 +45,6 @@ FileMonitor::~FileMonitor() {
     stop();
     delete data;
 }
-
-static void obtainNewFiles(const QDir &dir,
-                           QFileInfoList &maybayNew,
-                           const QStringList &nameFilters,
-                           const QDateTime &matchDate,
-                           const QStringList &exitsFiles) {
-    QFileInfoList fileInfoList = dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
-    for (auto fileInfo: fileInfoList) {
-        if (fileInfo.isDir()) {
-            auto dir = QDir(fileInfo.filePath());
-            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < 100) { // 新添加的目录
-                maybayNew << fileInfo;
-            }
-        } else {
-            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < 100) { // 去除系统影响，获取100ms内改动的文件
-                maybayNew << fileInfo;
-            } else if (!exitsFiles.contains(fileInfo.filePath())) {
-                // 虽然不是最近修改，但是从其它地方拷贝过来，也算新增
-                maybayNew << fileInfo;
-            }
-        }
-    }
-}
-
 
 void FileMonitor::start(const QString &path) {
     QFileInfo file(path);
@@ -95,7 +70,9 @@ void FileMonitor::start(const QString &path) {
     QStringList allDirectories;
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
     obtainAllFile(dir, data->existsFilePath, &allDirectories, nameFilters);
-    data->watcher->addPaths(allDirectories); // 只监听监听每一级的目录
+    if (allDirectories.isEmpty() == false) {
+        data->watcher->addPaths(allDirectories); // 只监听监听每一级的目录
+    }
     logger->i("已存在文件数量：{}. => {}", data->existsFilePath.count(), data->existsFilePath.join(", "));
 }
 
@@ -126,17 +103,6 @@ void FileMonitor::obtainAllFile(const QDir &dir, QStringList &allFiles, QStringL
     }
 }
 
-void FileMonitor::onFileChanged(const QString &path) {
-    QFile f(path);
-    logger->d("filepath={} has changed={}.", path, f.exists() ? translate(modified) : translate(removed));
-    if (f.exists()) {
-        emit fileChanged(path, modified);
-    } else {
-        data->existsFilePath.removeAll(path);
-        emit fileChanged(path, removed);
-    }
-}
-
 static void _remove_not_exists_file(QStringList &existsFilePath, FileMonitor *fm) {
     auto begin = existsFilePath.begin();
     while (begin != existsFilePath.end()) {
@@ -152,7 +118,6 @@ static void _remove_not_exists_file(QStringList &existsFilePath, FileMonitor *fm
 
 static void on_directory_changed(QFileInfoList changedFiles, FileMonitorPrivate *data, FileMonitor *self) {
     auto watcher = data->watcher;
-    auto files = watcher->files();
     for (auto file : changedFiles) {
         auto path = file.filePath();
         if (file.isDir()) {
@@ -161,35 +126,61 @@ static void on_directory_changed(QFileInfoList changedFiles, FileMonitorPrivate 
             }
             continue;
         }
-#if defined(Q_OS_MACOS)
-        if (!files.contains(path)) {
-            watcher->addPath(path);
-            data->existsFilePath.append(path);
-            emit self->fileChanged(path, FileMonitor::add);
-        }
-#else
-        if (files.contains(path)) {
+        if (data->existsFilePath.contains(path)) {
             emit self->fileChanged(path, FileMonitor::modified);
         } else {
             data->existsFilePath.append(path);
             emit self->fileChanged(path, FileMonitor::add);
         }
-#endif
     }
 }
 
+static QString tostring(QFileInfoList f) {
+    QStringList desc;
+    for (auto &file: f) {
+        desc.append(file.filePath());
+    }
+    return desc.join("\t");
+}
+
 void FileMonitor::onDirectoryChanged(const QString &path) {
+    auto currentDateTime = QDateTime::currentDateTime();
     QDir dir(path);
     dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
     QStringList nameFilters;
     nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
     QFileInfoList changedFiles;
-    obtainNewFiles(dir, changedFiles, nameFilters, QDateTime::currentDateTime(), data->existsFilePath);
+    obtainNewFiles(dir, changedFiles, nameFilters, currentDateTime);
     logger->d("path={} has changed.", path);
-
+    logger->d("changed files: {}", tostring(changedFiles));
     if (changedFiles.isEmpty()) {
         _remove_not_exists_file(data->existsFilePath, this);
     } else {
         on_directory_changed(changedFiles, data, this);
+    }
+}
+
+void FileMonitor::obtainNewFiles(const QDir &dir, QFileInfoList &maybayNew, const QStringList &nameFilters, const QDateTime &matchDate)
+{
+    static constexpr auto TIME_DIFF = 1000;
+    QFileInfoList fileInfoList = dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
+    for (auto fileInfo: fileInfoList) {
+        if (fileInfo.isDir()) {
+            auto dir = QDir(fileInfo.filePath());
+            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < TIME_DIFF) { // 新添加的目录
+                maybayNew << fileInfo;
+            }
+        } else {
+            auto time1 = matchDate.toMSecsSinceEpoch();
+            auto time2 = fileInfo.fileTime(QFileDevice::FileModificationTime).toMSecsSinceEpoch();
+            auto diff = time1 - time2;
+            logger->d("filepath={}, currentTime={}, time={}, diff={}", fileInfo.filePath(), time1, time2, diff);
+            if (fileInfo.fileTime(QFileDevice::FileModificationTime).msecsTo(matchDate) < TIME_DIFF) { // 去除系统影响，获取100ms内改动的文件
+                maybayNew << fileInfo;
+            } else if (!data->existsFilePath.contains(fileInfo.filePath())) {
+                // 虽然不是最近修改，但是从其它地方拷贝过来，也算新增
+                maybayNew << fileInfo;
+            }
+        }
     }
 }

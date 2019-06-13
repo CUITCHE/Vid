@@ -9,7 +9,8 @@
 #include <QPair>
 
 
-static const int32_t INITIALIZE = -1;
+static const int32_t INITIALIZE = 0;
+static const int32_t BUSYING = ~0;
 
 
 struct FilePathPool {
@@ -85,6 +86,7 @@ QMap<QString, QString> files_hahs(QStringList paths) {
 
 ControlClient::ControlClient(QObject *parent)
     : QThread(parent)
+    , LoggerI(parent)
     , client(new Client(this))
     , fm(new FileMonitor(this))
     , data(new ControlClientPrivate())
@@ -111,6 +113,8 @@ ControlClient::ControlClient(QObject *parent)
     connect(client, &Client::shouldBegin, this, [this]() {
         this->fm->start(this->data->watchPath);
     });
+    connect(client, &Client::diffComplete, this, &ControlClient::onDiffComplete);
+    connect(this, &ControlClient::diff, client, &Client::fileDiff);
 }
 
 ControlClient::~ControlClient()
@@ -122,6 +126,7 @@ void ControlClient::start(const QString &watchPath, const QString &host, uint16_
 {
     data->watchPath = watchPath;
     client->connectToHost(host, port);
+    QThread::start();
 }
 
 void ControlClient::setLoginInfo(const QString &name, const QString &token)
@@ -133,40 +138,41 @@ void ControlClient::setLoginInfo(const QString &name, const QString &token)
 void ControlClient::run()
 {
     data->isRunning = true;
-    data->queryId = 0;
+    data->queryId = INITIALIZE;
     Q_FOREVER {
         if (data->isRunning == false) break;
-        if (data->pool.isEmpty()) msleep(10);
-        if (data->queryId != INITIALIZE) msleep(10);
+
+        if (data->pool.isEmpty()) {
+            msleep(10); continue;
+        }
+        if (data->queryId != INITIALIZE) {
+            msleep(10); continue;
+        }
+        data->queryId = BUSYING;
 
         auto pair = data->pool.take_one();
-        QFile *file = nullptr;
         auto &path = pair.first;
         auto type = pair.second;
         QString relativePath = path.mid(data->watchPath.length() + 1);
-        if (type != FileMonitor::removed) {
-            file = new QFile(path);
+
+        emit diff(relativePath, path, type);
+
+        logger->i("正在同步: path={}, 操作={}", pair.first, FileMonitor::translate(pair.second));
+        if (!data->pool.isEmpty()) {
+            logger->i("队列中剩余：{}", data->pool.description());
         }
-        data->queryId = client->fileDiff(relativePath, file, type);
-        logger->i("正在同步: path={}, 操作={}, queryId={}", pair.first, FileMonitor::translate(pair.second), data->queryId.load());
-        if (file) {
-            file->close();
-            delete file;
-        }
-        logger->info(data->pool.description());
     }
+    logger->info("control quit...");
 }
 
 void ControlClient::onFileChanged(const QString &path, FileMonitor::FileChangeType type)
 {
+    logger->d("队列[添加]，path={} operator={}.", path, FileMonitor::translate(type));
     data->pool.insert(path, type);
 }
 
 void ControlClient::onDiffComplete(int32_t queryId, bool)
 {
-    if (queryId != data->queryId) {
-        logger->w("逻辑错误，diff的queryId={}与现存queryId={}不匹配", queryId, data->queryId.load());
-    }
     logger->i("同步完成, queryId={}", queryId);
     data->queryId = INITIALIZE;
 }
@@ -174,4 +180,6 @@ void ControlClient::onDiffComplete(int32_t queryId, bool)
 void ControlClient::stop()
 {
     data->isRunning = false;
+    fm->stop();
+    client->abort();
 }

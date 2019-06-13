@@ -13,7 +13,7 @@ namespace communication {
     class Request;
 }
 
-class Server : public QObject, public LoggerI
+class Server : public QObject, public LoggerI<Server>
 {
     Q_OBJECT
 public:

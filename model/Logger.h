@@ -8,13 +8,27 @@
 #define CONTAINS_FUNCTION(method_name) \
     template<typename T> \
     struct contain_##method_name { \
-        template<typename U, QString(U::*)()const> struct Dummpy; \
-        template<typename U> static char test(Dummpy<U, &U::method_name>*); \
+        template<typename U, QString(U::*)()const> struct Dummy; \
+        template<typename U> static char test(Dummy<U, &U::method_name>*); \
         template<typename U> static int test(...); \
         constexpr static bool value = sizeof (test<T>(0)) == sizeof (char); \
     }
 
 CONTAINS_FUNCTION(toString);
+
+#if defined (LOGGING_DEBUG)
+#define LOGGING_LEVEL 0
+#elif defined (LOGGING_INFO)
+#define LOGGING_LEVEL 1
+#elif defined (LOGGING_WARNING)
+#define LOGGING_LEVEL 2
+#elif defined (LOGGING_ERROR)
+#define LOGGING_LEVEL 3
+#elif defined (LOGGING_FATAL)
+#define LOGGING_LEVEL 4
+#else
+#define LOGGING_LEVEL 0
+#endif
 
 
 class Logger : public QObject
@@ -23,33 +37,60 @@ class Logger : public QObject
 public:
     enum Level {
         DEBUG = 0,
-        INFO,
-        WARNING,
-        ERROR,
-        FATAL
+        INFO = 1,
+        WARNING = 2,
+        ERROR = 3,
+        FATAL = 4
     };
     explicit Logger(const QString  &name, QObject *parent = nullptr);
     static Logger* logger(const QString &name, QObject *parent = nullptr);
     ~Logger();
 
-    void setLoggingLevel(Level level);
-    Level loggingLevel() const;
-
+#if LOGGING_LEVEL <= 0
     template<typename ...Ty>
-    void i(const QString &format, Ty&&... values);
+    void d(const QString &format, Ty&&... values) {
+        _write(format, DEBUG, std::forward<Ty>(values)...);
+    }
+#else
+    void d(...) {}
+#endif
 
+#if LOGGING_LEVEL <= 1
     template<typename ...Ty>
-    void d(const QString &format, Ty&&... values);
+    void i(const QString &format, Ty&&... values) {
+        _write(format, INFO, std::forward<Ty>(values)...);
+    }
+#else
+    void i(...) {}
+#endif
 
+#if LOGGING_LEVEL <= 2
     template<typename ...Ty>
-    void w(const QString &format, Ty&&... values);
+    void w(const QString &format, Ty&&... values) {
+        _write(format, WARNING, std::forward<Ty>(values)...);
+    }
+#else
+    void w(...) {}
+#endif
 
+
+#if LOGGING_LEVEL <= 3
     template<typename ...Ty>
-    void e(const QString &format, Ty&&... values);
+    void e(const QString &format, Ty&&... values) {
+        _write(format, ERROR, std::forward<Ty>(values)...);
+    }
+#else
+    void e(...) {}
+#endif
 
+#if LOGGING_LEVEL <= 4
     template<typename ...Ty>
-    void f(const QString &format, Ty&&... values);
-
+    void f(const QString &format, Ty&&... values) {
+        _write(format, FATAL, std::forward<Ty>(values)...);
+    }
+#else
+    void f(...) {}
+#endif
 
 public slots:
     void info(const QString &msg);
@@ -105,38 +146,7 @@ private:
 
 private:
     QString identifier;
-    Level level;
 };
-
-template<typename ...Ty>
-void Logger::i(const QString &format, Ty&&... values)
-{
-    _write(format, INFO, std::forward<Ty>(values)...);
-}
-
-template<typename ...Ty>
-void Logger::d(const QString &format, Ty&&... values)
-{
-    _write(format, DEBUG, std::forward<Ty>(values)...);
-}
-
-template<typename ...Ty>
-void Logger::w(const QString &format, Ty&&... values)
-{
-    _write(format, WARNING, std::forward<Ty>(values)...);
-}
-
-template<typename ...Ty>
-void Logger::e(const QString &format, Ty&&... values)
-{
-    _write(format, ERROR, std::forward<Ty>(values)...);
-}
-
-template<typename ...Ty>
-void Logger::f(const QString &format, Ty&&... values)
-{
-    _write(format, FATAL, std::forward<Ty>(values)...);
-}
 
 template<typename ...Ty, typename T>
 void Logger::_write_fmt(QString &content, const T &value, const Ty... values)
