@@ -35,6 +35,11 @@ static QTextStream& out() {
 Logger::Logger(const QString &name, QObject *parent)
     : QObject (parent)
     , identifier(name)
+#ifdef PRODUCT
+    , level(WARNING)
+#else
+    , level(DEBUG)
+#endif
 {
 }
 
@@ -47,6 +52,16 @@ Logger* Logger::logger(const QString &name, QObject *parent)
 Logger::~Logger()
 {
 
+}
+
+void Logger::setLoggingLevel(Level level)
+{
+    this->level = level;
+}
+
+Logger::Level Logger::loggingLevel() const
+{
+    return level;
 }
 
 void Logger::info(const QString &msg)
@@ -110,6 +125,9 @@ static void _string_format_append(QString &msg, Logger::Level l) {
 
 void Logger::write(const QString &content, Level level)
 {
+    if (level < this->level) {
+        return;
+    }
     QString text = _string_level(level);
     text.prepend("[");
     text.append(" ").append(identifier).append(" ");

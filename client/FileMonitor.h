@@ -4,24 +4,22 @@
 #include <QObject>
 #include "model/LoggerI.h"
 
-class FileMonitorPrivate;
-class QFileSystemWatcher;
 class QDir;
 
 
 class FileMonitor : public QObject, public LoggerI
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(FileMonitor)
 public:
     enum FileChangeType {
         modified = 1, // 文件内容发生改变
         add = 2, // 新增文件
         removed = 3 // 移除文件
     };
+    static const char *translate(FileChangeType type);
 public:
     explicit FileMonitor(QObject *parent = nullptr);
-    ~FileMonitor();
+    ~FileMonitor() override;
 
     void start(const QString &path); // need directory
     void stop();
@@ -33,8 +31,7 @@ public slots:
     void onFileChanged(const QString &path);
     void onDirectoryChanged(const QString &path);
 private:
-    QFileSystemWatcher *watcher;
-    QStringList existsFilePath; // 最开始监听时的文件目录情况
+    struct FileMonitorPrivate *data;
 
 };
 

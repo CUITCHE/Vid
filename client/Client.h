@@ -30,12 +30,13 @@ public:
 
     void tokenLogin(const QString &token, const QString &name);
     void directoryVerification(const QString &rootPath, const QString &rootName, const QMap<FileName, FileMD5> &contents);
-    void fileDiff(const QString &relativePath, QFile *file, int32_t status);
+    int32_t fileDiff(const QString &relativePath, QFile *file, int32_t status);
 signals:
     void connected();
     void disconnected();
     void loginSuccess();
     void shouldBegin(); // 登录验证流程完成，可以开始监控文件了。
+    void diffComplete(int32_t queryId, bool success); // 一次diff完成
 public slots:
     void onReadyRead();
 protected:

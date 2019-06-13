@@ -22,8 +22,8 @@ class Logger : public QObject
     Q_OBJECT
 public:
     enum Level {
+        DEBUG = 0,
         INFO,
-        DEBUG,
         WARNING,
         ERROR,
         FATAL
@@ -31,6 +31,10 @@ public:
     explicit Logger(const QString  &name, QObject *parent = nullptr);
     static Logger* logger(const QString &name, QObject *parent = nullptr);
     ~Logger();
+
+    void setLoggingLevel(Level level);
+    Level loggingLevel() const;
+
     template<typename ...Ty>
     void i(const QString &format, Ty&&... values);
 
@@ -101,6 +105,7 @@ private:
 
 private:
     QString identifier;
+    Level level;
 };
 
 template<typename ...Ty>
