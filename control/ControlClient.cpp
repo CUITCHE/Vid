@@ -74,7 +74,7 @@ QMap<QString, QString> files_hahs(QStringList paths) {
     QMap<QString, QString> contents;
     for (auto &path : paths) {
         QFile file(path);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (file.open(QIODevice::ReadOnly)) {
             QString hash(QCryptographicHash::hash(file.readAll(), QCryptographicHash::Sha256).toHex());
             contents.insert(path, hash);
             file.close();

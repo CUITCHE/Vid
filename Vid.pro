@@ -28,30 +28,28 @@ HEADERS += \
     client/Client.h \
     client/FileMonitor.h \
     control/ControlClient.h \
+    defer.h \
+    git/Git.h \
     model/Logger.h \
     model/LoggerI.h \
-    server/Server.h \
-    server/RequestWrapper.h \
-    server/ResponseWrapper.h \
     model/base.pb.h \
     model/requests.pb.h \
     model/responses.pb.h \
-    model/SerializedTool.h \
+    model/SerializedTool.h
 
 SOURCES += \
     client/Client.cpp \
     client/FileMonitor.cpp \
     control/ControlClient.cpp \
+    defer.cpp \
+    git/Git.cpp \
     main.cpp \
     model/Logger.cpp \
     model/LoggerI.cpp \
-    server/RequestWrapper.cpp \
-    server/ResponseWrapper.cpp \
-    server/Server.cpp \
     model/base.pb.cc \
     model/requests.pb.cc \
     model/responses.pb.cc \
-    model/SerializedTool.cpp \
+    model/SerializedTool.cpp
 
 macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf.18
 

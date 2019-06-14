@@ -30,11 +30,6 @@ signals:
     void fileChanged(const QString &path, FileChangeType type);
 public slots:
     void onDirectoryChanged(const QString &path);
-protected:
-    void obtainNewFiles(const QDir &dir,
-                        QFileInfoList &maybayNew,
-                        const QStringList &nameFilters,
-                        const QDateTime &matchDate);
 private:
     struct FileMonitorPrivate *data;
 

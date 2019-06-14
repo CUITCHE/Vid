@@ -30,7 +30,6 @@ CONTAINS_FUNCTION(toString);
 #define LOGGING_LEVEL 0
 #endif
 
-
 class Logger : public QObject
 {
     Q_OBJECT

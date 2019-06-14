@@ -26,7 +26,8 @@ def random_token(length):
 
 
 password = ''  # random_token(8)
-watchPath = ''
+watchPath = ''  # 监控路径，由用户提供
+
 fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$')
 
 
@@ -64,6 +65,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                     func(req)
             except Exception as e:
                 logger.error("%s", e)
+                break
 
     def read_request(self):
         length_buffer = self.request.recv(4)
@@ -239,3 +241,8 @@ def file_hash(paths):
             m.update(f.read())
             hashes[path[len(watchPath) + 1:]] = (m.hexdigest())
     return hashes
+
+
+
+
+

@@ -1,7 +1,6 @@
 #include <QCoreApplication>
 #include <QtDebug>
 #include "control/ControlClient.h"
-#include "server/Server.h"
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QStandardPaths>
@@ -16,7 +15,6 @@ void start_client(const QString &host, const QString &path, uint16_t port);
 void testLogin();
 void _main();
 
-#include <QDir>
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
@@ -84,25 +82,12 @@ void _main() {
             host = args[3];
         }
         start_client(host, path, port);
-    } else if (module == "server") {
-        Server *server = new Server;
-        server->startListen(port, path);
-    } else {
-        qDebug() << "未知 module name: " << module;
-        qDebug() << "Accepted module names: [client, server]";
     }
 }
 
 
 void testLogin() {
-    auto args = QCoreApplication::arguments();
-    if (args.count() > 1 && args[1] == "client") {
-        qDebug() << "client start";
-        ControlClient *control = new ControlClient();
-        control->setLoginInfo("hejunqiu", "");
-        control->start("/tmp/test1/work", "localhost", 9010);
-    } else {
-        Server *server = new Server;
-        server->startListen(9010, "/tmp/test2/work");
-    }
-}
+    qDebug() << "client start";
+    ControlClient *control = new ControlClient();
+    control->setLoginInfo("hejunqiu", "");
+    control->start("/tmp/test1/work", "localhost", 9010);}
