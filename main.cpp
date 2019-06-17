@@ -56,6 +56,7 @@ void start_client(const QString &host, const QString &path, uint16_t port, bool 
 void _main() {
     QCommandLineParser parser;
     parser.setApplicationDescription("A tool which Monitors file from client to server.");
+    parser.addPositionalArgument("host", "server地址");
     parser.addPositionalArgument("path", "监控路径，请使用绝对路径");
     parser.addPositionalArgument("port", "监听的端口号，client和server应使用同一个端口");
 
@@ -66,15 +67,16 @@ void _main() {
 
     parser.process(QCoreApplication::arguments());
     auto args = parser.positionalArguments();
-    if (args.length() < 2) {
-        qDebug() << "参数不足，至少2个参数[module, path, port]";
+    if (args.length() < 3) {
+        qDebug() << "固定参数不足，需要3个参数[module, path, port]";
         exit(-1);
     }
-    auto path  = args[0];
-    auto port = static_cast<uint16_t>(args[1].toUInt());
+    auto host = args[0];
+    auto path  = args[1];
+    auto port = static_cast<uint16_t>(args[2].toUInt());
     auto strict = parser.value("strict").toLower() == "true" ? true : false;
     qDebug() << args;
-    start_client("localhost", path, port, strict);
+    start_client(host, path, port, strict);
 }
 
 
