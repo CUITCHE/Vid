@@ -11,8 +11,6 @@ import vidserver.communication as communication
 from enum import Enum
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s %(name)s %(levelname)s] %(message)s')
-
 
 class FileChangeType(Enum):
     modified = 1
@@ -27,6 +25,8 @@ def random_token(length):
 
 password = ''  # random_token(8)
 watchPath = ''  # 监控路径，由用户提供
+gitDir = ''  # .git目录，由用户提供
+workTree = ''  # 工作目录，一般与watchPath一致，由用户提供
 
 fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$')
 
@@ -190,22 +190,42 @@ class TCPHandler(socketserver.BaseRequestHandler):
 
 
 def run_server(**kwargs):
+    log_path = None
+    if kwargs['log_path']:
+        log_path = kwargs['log_path']
+    logging.basicConfig(level=logging.INFO,
+                        format='[%(asctime)s %(name)s %(levelname)s] %(message)s',
+                        filename=log_path,
+                        filemode='a+')
+
     logger = logging.getLogger("run_server")
 
     host = kwargs['host']
     port = kwargs['port']
 
-    global watchPath
-    watchPath = kwargs['path']
+    global watchPath, workTree, gitDir
+
+    watchPath = os.path.abspath(kwargs['path'])
 
     if not watchPath:
         logger.error('监控目录不能为空')
         exit(-1)
+    workTree = watchPath
+    if kwargs['work_tree']:
+        workTree = os.path.abspath(kwargs['work_tree'])
+    if kwargs['git_dir']:
+        gitDir = os.path.abspath(kwargs['git_dir'])
+        if not gitDir.endswith('/.git'):
+            logger.error(f'\033[1;31m{gitDir}不是一个正确的.git目录\033[0m')
+            exit(-1)
+        if not os.path.exists(gitDir):
+            logger.error(f'\033[1;31m{gitDir}不存在\033[0m')
+            exit(-1)
 
     if not os.path.exists(watchPath):
         logger.error(f'\033[1;31m{watchPath} 不存在\033[0m')
         exit(-1)
-    logger.info(f"Listen on {port}. (Token={password}, WatchPath={watchPath})")
+    logger.info(f"Listen on {port}. (Token={password}, WatchPath={watchPath}, GitDir={gitDir}, WorkTree={workTree})")
     server = socketserver.TCPServer((host, port), TCPHandler)
 
     global fileNameFilter

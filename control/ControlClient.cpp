@@ -66,7 +66,8 @@ struct ControlClientPrivate {
     FilePathPool pool;
     std::atomic_int32_t queryId;
     std::atomic_bool isRunning;
-    char padding[11];
+    bool strict = false;
+    char padding[10];
 };
 
 
@@ -108,7 +109,7 @@ ControlClient::ControlClient(QObject *parent)
         QStringList existsFilePath;
         FileMonitor::obtainAllFile(dir, existsFilePath, nullptr, nameFilters);
         auto contents = files_hahs(existsFilePath);
-        this->client->directoryVerification(this->data->watchPath, dir.dirName(), contents);
+        this->client->directoryVerification(this->data->watchPath, dir.dirName(), contents, data->strict);
     });
     connect(client, &Client::shouldBegin, this, [this]() {
         this->fm->start(this->data->watchPath);
@@ -122,9 +123,10 @@ ControlClient::~ControlClient()
     delete data;
 }
 
-void ControlClient::start(const QString &watchPath, const QString &host, uint16_t port)
+void ControlClient::start(const QString &watchPath, const QString &host, uint16_t port, bool strict)
 {
     data->watchPath = watchPath;
+    data->strict = strict;
     client->connectToHost(host, port);
     QThread::start();
 }

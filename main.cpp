@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 
-void start_client(const QString &host, const QString &path, uint16_t port);
+void start_client(const QString &host, const QString &path, uint16_t port, bool strict);
 void testLogin();
 void _main();
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 }
 
 
-void start_client(const QString &host, const QString &path, uint16_t port) {
+void start_client(const QString &host, const QString &path, uint16_t port, bool strict) {
     ControlClient *control = new ControlClient();
     auto name = QString("[%1]-%2").arg(QHostInfo::localHostName(), QStandardPaths::writableLocation(QStandardPaths::HomeLocation).section("/", -1));
     qDebug("Welcome, %s ! Please Enter THE TOKEN which server given: ", name.toStdString().c_str()) ;
@@ -49,40 +49,32 @@ void start_client(const QString &host, const QString &path, uint16_t port) {
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     control->setLoginInfo(name, token);
-    control->start(path, host, port);
+    control->start(path, host, port, strict);
 }
 
 
 void _main() {
     QCommandLineParser parser;
     parser.setApplicationDescription("A tool which Monitors file from client to server.");
-    parser.addPositionalArgument("module", "启动模块的名称代号。只接受'client'和'server'");
     parser.addPositionalArgument("path", "监控路径，请使用绝对路径");
     parser.addPositionalArgument("port", "监听的端口号，client和server应使用同一个端口");
 
-    QCommandLineOption address(QStringList() << "a" << "address", "ip地址，server会忽略这个值。默认是localhost");
-    parser.addOption(address);
+    parser.addOption(QCommandLineOption(QStringList() << "s" << "strict", "是否启用严格模式，在此模式下，会忽略启动时对两端文件的check", "strict", "false"));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 
     parser.process(QCoreApplication::arguments());
     auto args = parser.positionalArguments();
-    if (args.length() < 3) {
-        qDebug() << "参数不足，至少三个参数[module, path, port]";
+    if (args.length() < 2) {
+        qDebug() << "参数不足，至少2个参数[module, path, port]";
         exit(-1);
     }
-    auto module = args[0];
-    auto path  = args[1];
-    auto port = static_cast<uint16_t>(args[2].toUInt());
+    auto path  = args[0];
+    auto port = static_cast<uint16_t>(args[1].toUInt());
+    auto strict = parser.value("strict").toLower() == "true" ? true : false;
     qDebug() << args;
-    if (module == "client") {
-        QString host = "localhost";
-        if (parser.isSet(address)) {
-            host = args[3];
-        }
-        start_client(host, path, port);
-    }
+    start_client("localhost", path, port, strict);
 }
 
 
@@ -90,4 +82,4 @@ void testLogin() {
     qDebug() << "client start";
     ControlClient *control = new ControlClient();
     control->setLoginInfo("hejunqiu", "");
-    control->start("/tmp/test1/work", "localhost", 9010);}
+    control->start("/tmp/test1/work", "localhost", 9010, false);}

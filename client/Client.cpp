@@ -82,7 +82,7 @@ void Client::tokenLogin(const QString &token, const QString &name)
     sendRequest(req);
 }
 
-void Client::directoryVerification(const QString &rootPath, const QString &rootName, const QMap<Client::FileName, Client::FileMD5> &contents)
+void Client::directoryVerification(const QString &rootPath, const QString &rootName, const QMap<Client::FileName, Client::FileMD5> &contents, bool strict)
 {
     int queryId = _get_query_id();
     requestReact.insert(queryId, [=](const void *ptr) {
@@ -93,9 +93,11 @@ void Client::directoryVerification(const QString &rootPath, const QString &rootN
         }
         if (res.code() != 0) {
             logger->w("文件校验失败：{}.", res.msg());
-            return ;
+            if (strict) {
+                return;
+            }
         }
-        logger->info("diff功能已就绪，现在开始愉快的写代码吧！");
+        logger->i("[{}]diff功能已就绪，现在开始愉快的写代码吧！", strict ? "strict" : "non-strict");
         emit this->shouldBegin();
     });
     communication::request::DirectoryVerification body;

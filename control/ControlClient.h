@@ -15,7 +15,7 @@ public:
     explicit ControlClient(QObject *parent = nullptr);
     ~ControlClient() override;
 
-    void start(const QString &watchPath, const QString &host, uint16_t port);
+    void start(const QString &watchPath, const QString &host, uint16_t port, bool strict);
     void setLoginInfo(const QString &name, const QString &token);
 protected:
     void run() override;

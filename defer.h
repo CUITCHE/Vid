@@ -16,7 +16,7 @@ private:
 #ifndef defer
 #define _contact(a, b) a##b
 #define _contact2(a, b) _contact(a, b)
-#define defer(codes) DeferDummy _contact2(defer, __LINE__)([&](){codes;})
+#define defer(codes) DeferDummy _contact2(defer, __LINE__)([&]()codes);
 #else
 #warning "can not use defer."
 #endif

@@ -29,7 +29,7 @@ public:
     void abort();
 
     void tokenLogin(const QString &token, const QString &name);
-    void directoryVerification(const QString &rootPath, const QString &rootName, const QMap<FileName, FileMD5> &contents);
+    void directoryVerification(const QString &rootPath, const QString &rootName, const QMap<FileName, FileMD5> &contents, bool strict);
 signals:
     void connected();
     void disconnected();

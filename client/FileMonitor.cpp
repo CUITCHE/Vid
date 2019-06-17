@@ -26,7 +26,8 @@ struct FileMeta {
         nochanges = 1000
     };
     QString file_path;  // 文件绝对路径
-    qint64 last_modified_time; // 最近修改时间，msecs Since Epoch.
+    bool sent = false; // 上次添加file-meta后是否已经发送信号
+    qint64 last_modified_time: 63; // 最近修改时间，msecs Since Epoch.
     qint64 last_content_size;  // 最近一次记录的文件大小
 
     FileMeta(const QString &filePath) : file_path(filePath) {
@@ -43,10 +44,10 @@ struct FileMeta {
         }
         auto content_size = file.size();
         auto cur_modified_time = file.fileTime(QFileDevice::FileModificationTime).toMSecsSinceEpoch();
-        defer (
-                last_content_size = content_size;
-                last_modified_time = cur_modified_time;
-        );
+        defer ({
+                   last_content_size = content_size;
+                   last_modified_time = cur_modified_time;
+               });
         if (content_size != last_content_size) {
             return modified;
         }
@@ -61,7 +62,7 @@ struct FileMonitorPrivate {
     QFileSystemWatcher *watcher = new QFileSystemWatcher;
     QStringList existsFilePath; // 最开始监听时的文件目录情况
     unordered_map<QString, FileMeta, QStringHasher> filemeta;
-    Git *git;
+    Git *git = nullptr;
 };
 
 
@@ -150,25 +151,6 @@ void FileMonitor::obtainAllFile(const QDir &dir, QStringList &allFiles, QStringL
     }
 }
 
-static void on_directory_changed(QFileInfoList changedFiles, FileMonitorPrivate *data, FileMonitor *self) {
-    auto watcher = data->watcher;
-    for (auto file : changedFiles) {
-        auto path = file.filePath();
-        if (file.isDir()) {
-            if (!watcher->directories().contains(path)) {
-                watcher->addPath(path);
-            }
-            continue;
-        }
-        if (data->existsFilePath.contains(path)) {
-            emit self->fileChanged(path, FileMonitor::modified);
-        } else {
-            data->existsFilePath.append(path);
-            emit self->fileChanged(path, FileMonitor::add);
-        }
-    }
-}
-
 static QStringList _new_add_directories(const QString &path, const QStringList &directories) {
     QDir dir(path);
     QFileInfoList fileInfoList = dir.entryInfoList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
@@ -193,27 +175,43 @@ void FileMonitor::onDirectoryChanged(const QString &path) {
     QStringList flags;
     data->git->status([this, &dir](const QStringList& newf, const QStringList& modifiedf, const QStringList& deletedf) {
         Q_UNUSED(deletedf);
+        auto store = {newf, modifiedf, deletedf};
 
-        if (!newf.isEmpty()) {
-            for (auto &path : newf) {
+        for (auto &s : store) {
+            if (s.isEmpty()) continue;
+            for (auto &path : s) {
                 auto filePath = dir.filePath(path);
-                if (data->filemeta.find(filePath) == data->filemeta.end()) {
+                auto iter = data->filemeta.find(filePath);
+                if (iter == data->filemeta.end()) {
                     data->filemeta.emplace(filePath, filePath);
-                    emit this->fileChanged(filePath, add);
                 } else {
-                    emit this->fileChanged(filePath, modified);
+                    iter->second.sent = false;
                 }
             }
-        }
-        if (!modifiedf.isEmpty()) {
-            for (auto &path : modifiedf) {
-                auto filePath = dir.filePath(path);
-                if (data->filemeta.find(filePath) != data->filemeta.end()) {
-                    emit this->fileChanged(filePath, modified);
-                } else {
-                    logger->w("filepath={} should be exists in memory records, but not.", filePath);
-                }
-            }
+
         }
     });
+
+    for (auto &pair: data->filemeta) {
+        auto &fm = pair.second;
+        qint32 status = fm.status();
+        defer({
+                  fm.sent = true;
+              });
+        switch (status) {
+        case FileMeta::modified:
+            emit fileChanged(fm.file_path, FileMonitor::modified);
+            break;
+        case FileMeta::removed:
+            emit fileChanged(fm.file_path, FileMonitor::removed);
+            break;
+        case FileMeta::nochanges:
+            if (fm.sent == false) {// is added newly
+                emit fileChanged(fm.file_path, FileMonitor::add);
+            }
+            break;
+        default:
+            logger->w("Unknown file status={} (1, 3 or 1000)", status);
+        }
+    }
 }
