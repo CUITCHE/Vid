@@ -55,3 +55,8 @@ macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf.18
 
 INCLUDEPATH += /usr/local/Cellar/protobuf/3.7.1/include
 DEPENDPATH += /usr/local/Cellar/protobuf/3.7.1/include
+
+
+
+INCLUDEPATH += /usr/local/Cellar/libgit2/0.28.2/include
+macos: LIBS += -L/usr/local/Cellar/libgit2/0.28.2/lib -lgit2

@@ -3,20 +3,75 @@
 #include <QTextStream>
 #include <QVector>
 #include <QDir>
+#include <git2.h>
+#include <QDebug>
+
+// https://libgit2.github.com/docs/guides/101-samples/
+class GitGuard {
+
+};
+
+struct GitPrivate: public LoggerI<GitPrivate> {
+    const QString rootDirPath;
+    git_repository *repo;
+    GitPrivate(const QString &rootDirPath)
+        : rootDirPath(rootDirPath)
+    {
+        git_libgit2_init();
+        QDir dir(rootDirPath);
+        int error = git_repository_open(&repo, rootDirPath.toStdString().c_str());
+        if (error < 0) {
+            const git_error *e = giterr_last();
+            logger->e("Error {}/{}: {}", error, e->klass, e->message);
+            exit(error);
+        }
+    }
+
+    ~GitPrivate() {
+        git_repository_free(repo);
+        git_libgit2_shutdown();
+    }
+
+    static int wal_cb(const char *root,
+                      const git_tree_entry *entry,
+                      void *payload) {
+        QStringList &ret = *(QStringList *)payload;
+        auto name = git_tree_entry_name(entry);
+        git_object_t objtype = git_tree_entry_type(entry);
+        ret << QString("%1 %2").arg(objtype).arg(QString(name));
+        qDebug() << "root:" << root << "\t name=" << name << "\t type=" << objtype;
+        return 0;
+    }
+
+    QStringList visited() const {
+        git_object *obj = nullptr;
+        int err = git_revparse_single(&obj, repo, "HEAD^{tree}");
+        git_tree *tree = (git_tree *)(obj);
+        QStringList ret;
+        err = git_tree_walk(tree, GIT_TREEWALK_PRE, GitPrivate::wal_cb, &ret);
+        git_object_free(obj);
+        return ret;
+    }
+};
+
+void __go() {
+    GitPrivate git("/Users/hejunqiu/Documents/QtProjects/Vid3");
+    qDebug() << git.visited();
+}
 
 Git::Git(const QString &rootDirPath, QObject *parent)
     : QObject(parent)
     , LoggerI(this)
-    , _rootDirPath(rootDirPath)
+    , d(new GitPrivate(rootDirPath))
 {
 
 }
 
 void Git::status(const GitStatusCallback &cb)
 {
-    QDir dir(_rootDirPath);
+    QDir dir(d->rootDirPath);
     auto git_dir = QString("--git-dir=%1").arg(dir.filePath(".git"));
-    auto work_tree = QString("--work-tree=%1").arg(_rootDirPath);
+    auto work_tree = QString("--work-tree=%1").arg(d->rootDirPath);
     QStringList arguments;
 
     int val = QProcess::execute("git", arguments << git_dir << work_tree << "add -A");
@@ -63,4 +118,9 @@ void Git::status(const GitStatusCallback &cb)
         }
     }
     cb(newFiles, modifiedFiles, deletedFiles);
+}
+
+const QString &Git::roorDirPath() const
+{
+    return d->rootDirPath;
 }

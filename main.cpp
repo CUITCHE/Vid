@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <git/Git.h>
 
 
 void start_client(const QString &host, const QString &path, uint16_t port, bool strict);
@@ -20,6 +21,8 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("Vid");
     QCoreApplication::setApplicationVersion("1.0.0");
+    __go();
+    exit(0);
 #ifdef PRODUCT
     _main();
 #else

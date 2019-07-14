@@ -5,6 +5,8 @@
 #include "model/LoggerI.h"
 #include <functional>
 
+struct GitPrivate;
+
 class Git : public QObject, public LoggerI<Git>
 {
     Q_OBJECT
@@ -18,11 +20,12 @@ public:
     // 注意：执行git status前会执行git add -A添加所有文件。
     void status(const GitStatusCallback &cb);
 
-    const QString &roorDirPath() const { return  _rootDirPath; }
+    const QString &roorDirPath() const;
 signals:
 public slots:
 private:
-    const QString _rootDirPath;
+    const GitPrivate *d;
 };
 
+extern void __go();
 #endif // GIT_H
