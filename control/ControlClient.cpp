@@ -7,6 +7,7 @@
 #include <QCryptographicHash>
 #include <atomic>
 #include <QPair>
+#include <git/Git.h>
 
 
 static const int32_t INITIALIZE = 0;
@@ -105,9 +106,10 @@ ControlClient::ControlClient(QObject *parent)
     connect(client, &Client::loginSuccess, this, [this]() {
         QDir dir(this->data->watchPath);
         QStringList nameFilters;
-        nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
         QStringList existsFilePath;
-        FileMonitor::obtainAllFile(dir, existsFilePath, nullptr, nameFilters);
+        Git git(dir.absolutePath());
+        git.all_file(nullptr, &existsFilePath);
+
         auto contents = files_hahs(existsFilePath);
         this->client->directoryVerification(this->data->watchPath, dir.dirName(), contents, data->strict);
     });

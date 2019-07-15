@@ -113,11 +113,10 @@ void FileMonitor::start(const QString &path) {
     data->watcher->addPath(path);
     data->git = new Git(path, this);
 
-    QDir dir(path);
-    QStringList nameFilters;
     QStringList allDirectories;
-    nameFilters << "*.swift" << "*.h" << "*.cpp" << "*.c" << "*.java" << "*.xml" << "*.hpp";
-    obtainAllFile(dir, data->existsFilePath, &allDirectories, nameFilters);
+    data->git->all_file(&allDirectories, &data->existsFilePath);
+    data->watcher->addPaths(allDirectories);
+
     if (allDirectories.isEmpty() == false) {
         data->watcher->addPaths(allDirectories); // 只监听每一级的目录
     }
@@ -135,20 +134,6 @@ void FileMonitor::stop() {
     }
 
     data->existsFilePath.clear();
-}
-
-void FileMonitor::obtainAllFile(const QDir &dir, QStringList &allFiles, QStringList *allDirectories, const QStringList &nameFilters)
-{
-    QFileInfoList fileInfoList = dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
-    for (auto fileInfo: fileInfoList) {
-        if (fileInfo.isDir()) {
-            auto dir = QDir(fileInfo.filePath());
-            allDirectories ? allDirectories->append(dir.path()) : qt_noop();
-            obtainAllFile(dir, allFiles, allDirectories, nameFilters);
-        } else {
-            allFiles << fileInfo.filePath();
-        }
-    }
 }
 
 static QStringList _new_add_directories(const QString &path, const QStringList &directories) {

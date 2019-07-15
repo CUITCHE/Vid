@@ -21,6 +21,8 @@ public:
     void status(const GitStatusCallback &cb);
 
     const QString &roorDirPath() const;
+
+    void all_file(QStringList *dirs, QStringList *files) const;
 signals:
 public slots:
 private:

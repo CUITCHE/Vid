@@ -47,32 +47,27 @@ public:
         return 0;
     }
 
-    void visit(QStringList &dirs, QStringList &files) const {
+    void visit(QStringList *dirs, QStringList *files) const {
         git_object *obj = nullptr;
         int err = git_revparse_single(&obj, repo, "HEAD^{tree}");
         git_tree *tree = static_cast<git_tree *>(static_cast<void *>(obj));
-        QStringList ret;
         GitFile wd(rootDirPath);
         err = git_tree_walk(tree, GIT_TREEWALK_PRE, GitPrivate::walk_cb, &wd);
         git_object_free(obj);
 
-        wd.visitPath([&](const QString &path) {
-           dirs << path;
-        });
+        if (dirs) {
+            wd.visitPath([&](const QString &path) {
+               *dirs << path;
+            });
+        }
 
-        wd.visitFiles([&](const QString &filepath) {
-            files << filepath;
-        });
+        if (files) {
+            wd.visitFiles([&](const QString &filepath) {
+                *files << filepath;
+            });
+        }
     }
 };
-
-void __go() {
-    GitPrivate git("/Users/hejunqiu/Documents/QtProjects/Vid3/");
-    QStringList dirs, files;
-    git.visit(dirs, files);
-    qDebug() << dirs;
-    qDebug() << files;
-}
 
 Git::Git(const QString &rootDirPath, QObject *parent)
     : QObject(parent)
@@ -133,9 +128,15 @@ void Git::status(const GitStatusCallback &cb)
         }
     }
     cb(newFiles, modifiedFiles, deletedFiles);
+
 }
 
 const QString &Git::roorDirPath() const
 {
     return d->rootDirPath;
+}
+
+void Git::all_file(QStringList *dirs, QStringList *files) const
+{
+    d->visit(dirs, files);
 }
