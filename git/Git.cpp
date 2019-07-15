@@ -5,15 +5,15 @@
 #include <QDir>
 #include <git2.h>
 #include <QDebug>
+#include <git/GitFile.h>
 
 // https://libgit2.github.com/docs/guides/101-samples/
-class GitGuard {
-
-};
 
 struct GitPrivate: public LoggerI<GitPrivate> {
-    const QString rootDirPath;
+private:
     git_repository *repo;
+public:
+    const QString rootDirPath;
     GitPrivate(const QString &rootDirPath)
         : rootDirPath(rootDirPath)
     {
@@ -32,31 +32,46 @@ struct GitPrivate: public LoggerI<GitPrivate> {
         git_libgit2_shutdown();
     }
 
-    static int wal_cb(const char *root,
+    static int walk_cb(const char *root,
                       const git_tree_entry *entry,
                       void *payload) {
-        QStringList &ret = *(QStringList *)payload;
+        GitFile &wd = *static_cast<GitFile *>(payload);
         auto name = git_tree_entry_name(entry);
         git_object_t objtype = git_tree_entry_type(entry);
-        ret << QString("%1 %2").arg(objtype).arg(QString(name));
         qDebug() << "root:" << root << "\t name=" << name << "\t type=" << objtype;
+        if (objtype == GIT_OBJECT_TREE) {
+            wd.addPath(name, root);
+        } else if (objtype == GIT_OBJECT_BLOB) {
+            wd.add(name, root);
+        }
         return 0;
     }
 
-    QStringList visited() const {
+    void visit(QStringList &dirs, QStringList &files) const {
         git_object *obj = nullptr;
         int err = git_revparse_single(&obj, repo, "HEAD^{tree}");
-        git_tree *tree = (git_tree *)(obj);
+        git_tree *tree = static_cast<git_tree *>(static_cast<void *>(obj));
         QStringList ret;
-        err = git_tree_walk(tree, GIT_TREEWALK_PRE, GitPrivate::wal_cb, &ret);
+        GitFile wd(rootDirPath);
+        err = git_tree_walk(tree, GIT_TREEWALK_PRE, GitPrivate::walk_cb, &wd);
         git_object_free(obj);
-        return ret;
+
+        wd.visitPath([&](const QString &path) {
+           dirs << path;
+        });
+
+        wd.visitFiles([&](const QString &filepath) {
+            files << filepath;
+        });
     }
 };
 
 void __go() {
-    GitPrivate git("/Users/hejunqiu/Documents/QtProjects/Vid3");
-    qDebug() << git.visited();
+    GitPrivate git("/Users/hejunqiu/Documents/QtProjects/Vid3/");
+    QStringList dirs, files;
+    git.visit(dirs, files);
+    qDebug() << dirs;
+    qDebug() << files;
 }
 
 Git::Git(const QString &rootDirPath, QObject *parent)

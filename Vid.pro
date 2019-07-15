@@ -30,6 +30,7 @@ HEADERS += \
     control/ControlClient.h \
     defer.h \
     git/Git.h \
+    git/GitFile.h \
     model/Logger.h \
     model/LoggerI.h \
     model/base.pb.h \
@@ -43,6 +44,7 @@ SOURCES += \
     control/ControlClient.cpp \
     defer.cpp \
     git/Git.cpp \
+    git/GitFile.cpp \
     main.cpp \
     model/Logger.cpp \
     model/LoggerI.cpp \
