@@ -108,7 +108,7 @@ ControlClient::ControlClient(QObject *parent)
         QStringList nameFilters;
         QStringList existsFilePath;
         Git git(dir.absolutePath());
-        git.all_file(nullptr, &existsFilePath);
+        git.allFiles(nullptr, &existsFilePath);
 
         auto contents = files_hahs(existsFilePath);
         this->client->directoryVerification(this->data->watchPath, dir.dirName(), contents, data->strict);

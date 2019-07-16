@@ -28,8 +28,6 @@ watchPath = ''  # 监控路径，由用户提供
 gitDir = ''  # .git目录，由用户提供
 workTree = ''  # 工作目录，一般与watchPath一致，由用户提供
 
-fileNameFilter = re.compile('.*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$')
-
 
 class UnknownChangedFileTypeError(Exception):
     pass
@@ -89,37 +87,36 @@ class TCPHandler(socketserver.BaseRequestHandler):
         res = communication.response.Response()
         res.id = req.id
         token_login = communication.request.TokenLogin()
-        while True:
+        try:
             if token_login.ParseFromString(req.body):
                 if token_login.token == password:
                     res.code = 0
                     res.msg = 'success'
                     self.is_login = True
-                    break
+                    return
             self.is_login = False
             res.code = 403
             res.msg = '登入口令或数据包格式错误'
-            break
-
-        self.send_response(res)
+            return
+        finally:
+            self.send_response(res)
 
     def directory_verification(self, req: communication.request.Request):
         res = communication.response.Response()
         res.id = req.id
         res.msg = 'success'
-        while True:
+        try:
             dv = communication.request.DirectoryVerification()
 
             if not dv.ParseFromString(req.body):
                 res.code = 403
                 res.msg = '数据包格式不对'
-                break
+                return
             if os.path.split(watchPath)[1] != dv.root_name:
                 res.code = 403
                 res.msg = '监控的根目录名不一致'
-                break
-            all_files = list()
-            list_all_files(watchPath, all_files)
+                return
+            all_files = list_all_files(watchPath)
             relative_all_files = list()
             for path in all_files:
                 relative_all_files.append(path[len(watchPath) + 1:])
@@ -133,7 +130,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             if msg:
                 res.code = 4
                 res.msg = msg
-                break
+                return
             hash_files = file_hash(all_files)
             differences = list()
             for key, value in hash_files.items():
@@ -143,21 +140,21 @@ class TCPHandler(socketserver.BaseRequestHandler):
             if len(differences):
                 res.code = 5
                 res.msg = '\n'.join(differences)
-            break
-
-        self.send_response(res)
+            return
+        finally:
+            self.send_response(res)
 
     def file_diff(self, req: communication.request.Request):
         logger = logging.getLogger("TCPHandler.file_diff")
         res = communication.response.Response()
         res.id = req.id
         res.msg = 'success'
-        while True:
+        try:
             fdiff = communication.request.FileDiff()
             if not fdiff.ParseFromString(req.body):
                 res.code = 403
                 res.msg = '数据包格式不对'
-                break
+                return
             path = watchPath
             if not path.endswith('/'):
                 path += '/'
@@ -165,14 +162,14 @@ class TCPHandler(socketserver.BaseRequestHandler):
             status = FileChangeType(fdiff.status)
             if status == FileChangeType.removed:
                 if not os.path.exists(path):
-                    break
+                    return
                 try:
                     os.remove(path)
                 except Exception as e:
                     logger.warning("%s", e)
                     res.code = 404
                     res.msg = f'{path}: remove failed.'
-                    break
+                    return
             elif status == FileChangeType.add:
                 parent_dir = os.path.split(path)[0]
                 if not os.path.exists(parent_dir):
@@ -185,8 +182,9 @@ class TCPHandler(socketserver.BaseRequestHandler):
             else:
                 raise UnknownChangedFileTypeError()
             logger.info(f"更新文件: {path}, 操作={status}")
-            break
-        self.send_response(res)
+            return
+        finally:
+            self.send_response(res)
 
 
 def run_server(**kwargs):
@@ -228,9 +226,6 @@ def run_server(**kwargs):
     logger.info(f"Listen on {port}. (Token={password}, WatchPath={watchPath}, GitDir={gitDir}, WorkTree={workTree})")
     server = socketserver.TCPServer((host, port), TCPHandler)
 
-    global fileNameFilter
-    filters = kwargs['filter']  # .*(.cpp|.h|.swift|.cc|.hpp|.xml|.java|.js|.vue|.c)$'
-    fileNameFilter = re.compile(f".*(.{'|.'.join(filters)})$")
     try:
         server.serve_forever()
     except Exception as e:
@@ -241,15 +236,9 @@ def run_server(**kwargs):
         server.server_close()
 
 
-def list_all_files(path, all_files: list):
-    files = os.listdir(path)
-    for file in files:
-        new_path = os.path.join(path, file)
-        if os.path.isfile(new_path):
-            if fileNameFilter.match(new_path):
-                all_files.append(new_path)
-        elif os.path.isdir(new_path):
-            list_all_files(new_path, all_files)
+def list_all_files(path):
+    from vidserver.git import all_files
+    return all_files(path)
 
 
 def file_hash(paths):

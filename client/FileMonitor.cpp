@@ -25,20 +25,20 @@ struct FileMeta {
         removed = 3,
         nochanges = 1000
     };
-    QString file_path;  // 文件绝对路径
+    QString filepath;  // 文件绝对路径
     bool sent = false; // 上次添加file-meta后是否已经发送信号
     qint64 last_modified_time: 63; // 最近修改时间，msecs Since Epoch.
     qint64 last_content_size;  // 最近一次记录的文件大小
 
-    FileMeta(const QString &filePath) : file_path(filePath) {
-        QFileInfo file(file_path);
+    FileMeta(const QString &filePath) : filepath(filePath) {
+        QFileInfo file(filepath);
         Q_ASSERT(file.exists());
         last_modified_time = file.fileTime(QFileDevice::FileModificationTime).toMSecsSinceEpoch();
         last_content_size = file.size();
     }
 
     qint32 status() {
-        QFileInfo file(file_path);
+        QFileInfo file(filepath);
         if (!file.exists()) {
             return removed;
         }
@@ -59,7 +59,7 @@ struct FileMeta {
 };
 
 struct FileMonitorPrivate {
-    QFileSystemWatcher *watcher = new QFileSystemWatcher;
+    QFileSystemWatcher *watcher;
     QStringList existsFilePath; // 最开始监听时的文件目录情况
     unordered_map<QString, FileMeta, QStringHasher> filemeta;
     Git *git = nullptr;
@@ -84,6 +84,7 @@ FileMonitor::FileMonitor(QObject *parent)
     , LoggerI(parent)
     , data(new FileMonitorPrivate)
 {
+    data->watcher = new QFileSystemWatcher(this);
     connect(data->watcher, &QFileSystemWatcher::directoryChanged, this, &FileMonitor::onDirectoryChanged);
 }
 
@@ -114,12 +115,16 @@ void FileMonitor::start(const QString &path) {
     data->git = new Git(path, this);
 
     QStringList allDirectories;
-    data->git->all_file(&allDirectories, &data->existsFilePath);
-    data->watcher->addPaths(allDirectories);
+    data->git->allFiles(&allDirectories, &data->existsFilePath);
 
-    if (allDirectories.isEmpty() == false) {
-        data->watcher->addPaths(allDirectories); // 只监听每一级的目录
+    // Warnings: MacOS系统支持无限量监控，其它系统未知。如果要支持其它系统这里以及与之相关的逻辑需要更改。
+    data->watcher->addPaths(allDirectories);
+    data->watcher->addPaths(data->existsFilePath);
+
+    for (auto &filepath: data->existsFilePath) {
+        data->filemeta.emplace(filepath, filepath);
     }
+
     logger->i("已存在文件数量：{}. => {}", data->existsFilePath.count(), data->existsFilePath.join(", "));
 }
 
@@ -132,11 +137,11 @@ void FileMonitor::stop() {
     if (watcher->directories().isEmpty() == false) {
         watcher->removePaths(watcher->directories());
     }
-
+    delete data->git;
     data->existsFilePath.clear();
 }
 
-static QStringList _new_add_directories(const QString &path, const QStringList &directories) {
+static QStringList _new_added_directories(const QString &path, const QStringList &directories) {
     QDir dir(path);
     QFileInfoList fileInfoList = dir.entryInfoList(QStringList() << "*", QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::AllDirs);
     QStringList contents;
@@ -148,55 +153,94 @@ static QStringList _new_add_directories(const QString &path, const QStringList &
     return  contents;
 }
 
-void FileMonitor::onDirectoryChanged(const QString &path) {
-    logger->d("path={} has changed.", path);
+static QStringList _all_file_inpath(const QString &path, const QStringList &files) {
+    QDir dir(path);
+    QFileInfoList fileInfoList = dir.entryInfoList(QStringList() << "*", QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+    QStringList contents;
+    for (auto fileInfo: fileInfoList) {
+        if (fileInfo.isFile() && !files.contains(fileInfo.filePath())) {
+            contents << fileInfo.filePath();
+        }
+    }
+    return  contents;
+}
 
-    auto changedFiles = _new_add_directories(path, data->watcher->directories());
-    if (!changedFiles.isEmpty()) {
-        data->watcher->addPaths(changedFiles);
+void FileMonitor::onDirectoryChanged(const QString &path) {
+    logger->i("path={} has changed.", path);
+
+    {
+        // check
+        QDir dir(path);
+        if (dir.exists() == false) {
+            data->watcher->removePath(path);
+            return;
+        }
+
+        auto new_dirs = _new_added_directories(path, data->watcher->directories());
+        if (!new_dirs.isEmpty()) {
+            data->watcher->addPaths(new_dirs);
+        }
     }
 
-    QDir dir(data->git->roorDirPath());
+    auto new_files = _all_file_inpath(path, data->watcher->files());
     QStringList flags;
-    data->git->status([this, &dir](const QStringList& newf, const QStringList& modifiedf, const QStringList& deletedf) {
-        Q_UNUSED(deletedf);
-        auto store = {newf, modifiedf, deletedf};
-
-        for (auto &s : store) {
-            if (s.isEmpty()) continue;
-            for (auto &path : s) {
-                auto filePath = dir.filePath(path);
-                auto iter = data->filemeta.find(filePath);
-                if (iter == data->filemeta.end()) {
-                    data->filemeta.emplace(filePath, filePath);
-                } else {
-                    iter->second.sent = false;
-                }
+    auto iter = new_files.begin();
+    while (iter != new_files.end()) {
+        const QString &filepath = *iter;
+        if (data->git->isIgnored(filepath) == false) {
+            if (data->filemeta.find(filepath) == data->filemeta.end()) {
+                data->watcher->addPath(filepath);
+                data->filemeta.emplace(filepath, filepath);
+                flags << filepath;
             }
-
+            ++iter;
+        } else {
+            iter = new_files.erase(iter);
         }
-    });
+    }
 
-    for (auto &pair: data->filemeta) {
-        auto &fm = pair.second;
-        qint32 status = fm.status();
-        defer({
-                  fm.sent = true;
-              });
-        switch (status) {
+    for (auto &filepath: flags) {
+        auto iter = data->filemeta.find(filepath);
+        if (iter != data->filemeta.end()) {
+            auto &fm = iter->second;
+            _file_changed(fm);
+        } else {
+            logger->e("logic error. file={} should be exists.", filepath);
+        }
+    }
+}
+
+void FileMonitor::onFileChanged(const QString &filepath) {
+    logger->i("file={} has changed.", filepath);
+    auto iter = data->filemeta.find(filepath);
+    if (iter != data->filemeta.end()) {
+        auto &fm = iter->second;
+        _file_changed(fm);
+    } else {
+        logger->e("logic error. file={} should be exists.", filepath);
+    }
+}
+
+void FileMonitor::_file_changed(FileMeta &fm) {
+    qint32 status = fm.status();
+    defer({
+        fm.sent = true;
+    });
+    switch (status) {
         case FileMeta::modified:
-            emit fileChanged(fm.file_path, FileMonitor::modified);
+            emit fileChanged(fm.filepath, FileMonitor::modified);
             break;
         case FileMeta::removed:
-            emit fileChanged(fm.file_path, FileMonitor::removed);
+            if (fm.sent == false) {
+                emit fileChanged(fm.filepath, FileMonitor::removed);
+            }
             break;
         case FileMeta::nochanges:
-            if (fm.sent == false) {// is added newly
-                emit fileChanged(fm.file_path, FileMonitor::add);
+            if (fm.sent == false) {// added newly
+                emit fileChanged(fm.filepath, FileMonitor::add);
             }
             break;
         default:
             logger->w("Unknown file status={} (1, 3 or 1000)", status);
-        }
     }
 }

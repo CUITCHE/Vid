@@ -24,11 +24,14 @@ public:
 
     void start(const QString &path); // need directory
     void stop();
+protected:
+    void _file_changed(struct FileMeta &fm);
 
 signals:
     void fileChanged(const QString &path, FileChangeType type);
 public slots:
     void onDirectoryChanged(const QString &path);
+    void onFileChanged(const QString &path);
 private:
     struct FileMonitorPrivate *data;
 

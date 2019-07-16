@@ -7,6 +7,7 @@ TARGET = Vid
 INCLUDEPATH += .
 CONFIG += qt
 CONFIG -= app_bundle
+CONFIG += c++17
 QT += core network
 QT -= gui
 
@@ -36,7 +37,9 @@ HEADERS += \
     model/base.pb.h \
     model/requests.pb.h \
     model/responses.pb.h \
-    model/SerializedTool.h
+    model/SerializedTool.h \
+    settings/Configure.h \
+    settings/Section.h
 
 SOURCES += \
     client/Client.cpp \
@@ -51,7 +54,9 @@ SOURCES += \
     model/base.pb.cc \
     model/requests.pb.cc \
     model/responses.pb.cc \
-    model/SerializedTool.cpp
+    model/SerializedTool.cpp \
+    settings/Configure.cpp \
+    settings/Section.cpp
 
 macos: LIBS += -L/usr/local/Cellar/protobuf/3.7.1/lib/ -lprotobuf.18
 
@@ -62,3 +67,5 @@ DEPENDPATH += /usr/local/Cellar/protobuf/3.7.1/include
 
 INCLUDEPATH += /usr/local/Cellar/libgit2/0.28.2/include
 macos: LIBS += -L/usr/local/Cellar/libgit2/0.28.2/lib -lgit2
+
+DISTFILES +=

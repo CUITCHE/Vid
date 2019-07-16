@@ -9,6 +9,8 @@
 #include <termios.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "settings/Configure.h"
+#include "git/Git.h"
 
 
 void start_client(const QString &host, const QString &path, uint16_t port, bool strict);
@@ -19,7 +21,14 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationName("Vid");
+    QCoreApplication::setOrganizationName("Anonymous");
     QCoreApplication::setApplicationVersion("1.0.0");
+    Git git("/Users/hejunqiu/Documents/QtProjects/Vid3/");
+    QStringList dirs, files;
+    git.allFiles(&dirs, &files);
+    qDebug() << dirs;
+    qDebug() << files;
+    exit(0);
 #ifdef PRODUCT
     _main();
 #else
@@ -54,28 +63,15 @@ void start_client(const QString &host, const QString &path, uint16_t port, bool 
 
 
 void _main() {
-    QCommandLineParser parser;
-    parser.setApplicationDescription("A tool which Monitors file from client to server.");
-    parser.addPositionalArgument("host", "server地址");
-    parser.addPositionalArgument("path", "监控路径，请使用绝对路径");
-    parser.addPositionalArgument("port", "监听的端口号，client和server应使用同一个端口");
+    auto &cf = *Configure::shared();
+    auto server = cf.section("server");
+    auto host = server.get("host", "localhost").toString();
+    auto port = server.get("port", 9010).toUInt();
 
-    parser.addOption(QCommandLineOption(QStringList() << "s" << "strict", "是否启用严格模式，在此模式下，会忽略启动时对两端文件的check", "strict", "false"));
-    parser.addHelpOption();
-    parser.addVersionOption();
-    parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    auto local = cf.section("local");
+    auto path = local.get("path").toString();
+    auto strict = local.get("strict").toBool();
 
-    parser.process(QCoreApplication::arguments());
-    auto args = parser.positionalArguments();
-    if (args.length() < 3) {
-        qDebug() << "固定参数不足，需要3个参数[module, path, port]";
-        exit(-1);
-    }
-    auto host = args[0];
-    auto path  = args[1];
-    auto port = static_cast<uint16_t>(args[2].toUInt());
-    auto strict = parser.value("strict").toLower() == "true" ? true : false;
-    qDebug() << args;
     start_client(host, path, port, strict);
 }
 

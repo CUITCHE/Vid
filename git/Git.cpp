@@ -6,13 +6,12 @@
 #include <git2.h>
 #include <QDebug>
 #include <git/GitFile.h>
+#include "defer.h"
 
 // https://libgit2.github.com/docs/guides/101-samples/
 
 struct GitPrivate: public LoggerI<GitPrivate> {
-private:
     git_repository *repo;
-public:
     const QString rootDirPath;
     GitPrivate(const QString &rootDirPath)
         : rootDirPath(rootDirPath)
@@ -49,7 +48,7 @@ public:
 
     void visit(QStringList *dirs, QStringList *files) const {
         git_object *obj = nullptr;
-        int err = git_revparse_single(&obj, repo, "HEAD^{tree}");
+        int err = git_revparse_single(&obj, repo, "HEAD^{tree}"); // 遍历当前tree，不包括已修改但没提交的
         git_tree *tree = static_cast<git_tree *>(static_cast<void *>(obj));
         GitFile wd(rootDirPath);
         err = git_tree_walk(tree, GIT_TREEWALK_PRE, GitPrivate::walk_cb, &wd);
@@ -75,6 +74,10 @@ Git::Git(const QString &rootDirPath, QObject *parent)
     , d(new GitPrivate(rootDirPath))
 {
 
+}
+
+Git::~Git() {
+    delete d;
 }
 
 void Git::status(const GitStatusCallback &cb)
@@ -128,7 +131,6 @@ void Git::status(const GitStatusCallback &cb)
         }
     }
     cb(newFiles, modifiedFiles, deletedFiles);
-
 }
 
 const QString &Git::roorDirPath() const
@@ -136,7 +138,65 @@ const QString &Git::roorDirPath() const
     return d->rootDirPath;
 }
 
-void Git::all_file(QStringList *dirs, QStringList *files) const
+void Git::allFiles(QStringList *dirs, QStringList *files) const
 {
     d->visit(dirs, files);
+}
+
+bool Git::isIgnored(const QString &path) const
+{
+    int ignored = 0;
+    auto c_path = path.toStdString().c_str();
+    int success = git_ignore_path_is_ignored(&ignored, d->repo, c_path);
+    if (success == 0) {
+        return ignored == 1;
+    } else {
+        logger->w("Filepath={} cannot be apply to ignore rules.", path);
+    }
+    return false;
+}
+
+int match_cb(const char *path, const char *spec, void *payload)
+{
+    Q_UNUSED(path);
+    Q_UNUSED(spec);
+    Q_UNUSED(payload);
+    /*
+     * return 0 to add/remove this path,
+     * a positive number to skip this path,
+     * or a negative number to abort the operation.
+     */
+    return 0;
+}
+
+void Git::addAll(const QString &path) const
+{
+    QString targetPath = path;
+    if (targetPath.endsWith("/")) {
+        targetPath.append("*");
+    } else {
+        targetPath.append("/*");
+    }
+    auto tmp = targetPath.toStdString();
+    char *paths[] = {(char *)tmp.c_str()};
+    git_strarray arr = {(char **)(paths), sizeof(paths)};
+
+    git_index *idx = nullptr;
+    defer({
+        git_index_free(idx);
+    });
+
+    int error = git_repository_index(&idx, d->repo);
+    lastError(error);
+
+    error = git_index_add_all(idx, &arr, GIT_INDEX_ADD_DEFAULT, match_cb, nullptr);
+    lastError(error);
+}
+
+void Git::lastError(int error) const {
+    if (error < 0) {
+        const git_error *e = giterr_last();
+        logger->e("Error {}/{}: {}", error, e->klass, e->message);
+        exit(error);
+    }
 }

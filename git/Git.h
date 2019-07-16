@@ -12,6 +12,7 @@ class Git : public QObject, public LoggerI<Git>
     Q_OBJECT
 public:
     explicit Git(const QString &rootDirPath, QObject *parent = nullptr);
+    ~Git();
 
     // 执行git status后的回调函数类型。入参为：新增的文件列表、修改的文件列表、已删除的文件列表
     using GitStatusCallback = std::function<void(const QStringList& newf, const QStringList& modifiedf, const QStringList& deletedf)>;
@@ -22,12 +23,18 @@ public:
 
     const QString &roorDirPath() const;
 
-    void all_file(QStringList *dirs, QStringList *files) const;
-signals:
-public slots:
+    // 遍历所有满足.gitignore规则的文件和目录。、
+    void allFiles(QStringList *dirs, QStringList *files) const;
+
+    bool isIgnored(const QString &path) const;
+
+    // git add -A，把指定目录里的文件加入repo
+    void addAll(const QString &path) const;
+
+    void lastError(int error) const;
 private:
     const GitPrivate *d;
 };
 
-extern void __go();
+
 #endif // GIT_H
