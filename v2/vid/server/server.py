@@ -6,15 +6,9 @@ import socketserver
 import struct
 import random
 import os
-import vidserver.communication as communication
-from enum import Enum
+import communication as communication
+from communication.filestatus import FileChangeType
 import logging
-
-
-class FileChangeType(Enum):
-    modified = 1
-    add = 2
-    removed = 3
 
 
 def random_token(length):
@@ -157,7 +151,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 path += '/'
             path += fdiff.relative_path
             status = FileChangeType(fdiff.status)
-            if status == FileChangeType.removed:
+            if status == FileChangeType.deleted:
                 if not os.path.exists(path):
                     return
                 try:
@@ -223,7 +217,7 @@ def run_server(**kwargs):
 
 
 def list_all_files(path):
-    from vidserver.git import all_files
+    from server.git import all_files
     return all_files(path)
 
 
