@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package communication;
+
+message CreatedMsg {
+    string path = 1;
+    bool is_dir = 2;
+    bytes content = 3;
+}
+
+message ModifiedMsg {
+    string path = 1;
+    bytes content = 2;
+}
+
+message DeleteMsg {
+    bool is_dir = 1;
+    string path = 2;
+}
+
+message MovedMsg {
+    bool is_dir = 1;
+    string src = 2;
+    string dst = 3;
+}

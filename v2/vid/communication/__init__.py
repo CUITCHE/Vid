@@ -1,5 +1,4 @@
-from .Protocol import *
-from .request import *
-from .response import *
+from .filec_pb2 import *
 
 
+__all__ = ['CreatedMsg', 'ModifiedMsg', 'MovedMsg', 'DeleteMsg']
